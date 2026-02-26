@@ -1,60 +1,59 @@
-# DSAN 6725 Final Project
+# SmartMatch: Multimodal Image Recommendation via CLIP and GPT-4o
 
-This repository contains information about deliverables, project ideas, and all things related to the final project.
+## Abstract
 
-## Overview
+Selecting an appropriate image to accompany a social media post or article is a common yet time-consuming challenge. Users frequently struggle to identify visuals that align with the tone, content, and emotional intent of their text. This project proposes **SmartMatch**, an AI-powered image recommendation system that leverages CLIP (Contrastive Language-Image Pretraining) and GPT-4o to bridge the semantic gap between textual content and visual media.
 
-DSAN 6725 is an applied AI course. The focus is on building production-quality AI agent systems that solve real problems. All projects must implement AI agents unless an alternative approach is explicitly approved by the professor.
+The core challenge addressed is the mismatch between abstract or emotionally rich text and the concrete visual representations that CLIP can match. To overcome this, we introduce a **Visual Concept Grounding** step in which GPT-4o transforms user input into visually descriptive language before retrieval. The system then performs semantic search over a curated image library using CLIP embeddings, and falls back to DALL·E 3 image generation when no sufficiently similar image is found. Final candidate images are re-ranked by CLIP similarity and presented to the user with natural-language justifications.
 
-This repo provides project ideas but you are not limited to these. You can explore other ideas but it is incumbent upon you (your team) to discuss these ideas and get approval before proceeding. The ideas suggested here are practically useful and have been selected because they have a reasonable chance of success in a 6-week timeframe.
+The system is evaluated against three baselines — random selection, text-only keyword search, and image-only retrieval — using CLIP similarity score, user preference rating, and retrieval relevance (NDCG). This project contributes a practical, end-to-end multimodal pipeline that demonstrates the synergy between vision-language models and large language models for real-world creative assistance.
 
-This repo is organized into the following parts:
+---
 
-- [Project Ideas](#project-ideas)
-- [Deliverables](#deliverables)
-- [FAQ](#faq)
-- [Resources](#resources)
+## Agent Flow
 
-## Project Ideas
+```
+User Text
+  → [1] Input Handler
+  → [2] Visual Concept Grounding (GPT-4o)
+  → [3] CLIP Encoder
+  → [4] Semantic Retrieval (FAISS)
+  → Score ≥ threshold?
+      ├── YES → [6] Re-ranker
+      └── NO  → [5] DALL·E 3 Generation → [6] Re-ranker
+  → [7] Justification Generator (GPT-4o)
+  → [8] Output UI
+```
 
-These project ideas have well-defined problem statements, but the implementation details are flexible and open to creative solutions. Use the descriptions provided as springboards for your own approaches to solving these problems.
+---
 
-### Spring 2026 Projects
+## System Pipeline
 
-- [AI Tech Debt Forge](./spring-2026/ai-tech-debt-forge.md) - Multi-agent system for codebase modernization with persona-based validation
-- [AI Trading Strategist](./spring-2026/ai-trading-strategist.md) - Paper trading system using Alpaca API for strategy development and backtesting
-- [AI Spark Optimizer](./spring-2026/ai-spark-optimizer.md) - Intelligent Spark job analysis with interpretable performance recommendations
-- [Cloud Cost Refinery](./spring-2026/cloud-cost-refinery.md) - AWS cost optimization agent that generates executable cleanup commands
-- [AI Schema Harmonizer](./spring-2026/ai-schema-harmonizer.md) - Normalize schemas across SaaS tools with observability data focus
-- [AI Data Prep Pipeline](./spring-2026/ai-data-prep-pipeline.md) - Universal document processing for RAG and vector search
+| Step                        | Description                                                                                                                      | Technology   |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| 1. Input                    | User submits a text snippet (post, caption, article excerpt)                                                                     | —            |
+| 2. Visual Concept Grounding | GPT-4o transforms abstract text into visually descriptive language; extracts scene, emotion, style keywords                      | GPT-4o       |
+| 3. Semantic Retrieval       | Visual description encoded as CLIP embedding; cosine similarity search against image library (Unsplash / LAION subset via FAISS) | CLIP + FAISS |
+| 4. Fallback Generation      | If top similarity < threshold, DALL·E 3 generates 3 candidate images from the visual description                                 | DALL·E 3     |
+| 5. Re-ranking               | All candidates (retrieved + generated) re-ranked by CLIP similarity to original text                                             | CLIP         |
+| 6. Output                   | Top-3 images returned with natural-language justification and style labels; user feedback collected                              | GPT-4o + UI  |
 
-### Archived Projects
+---
 
-Previous semester project ideas are available in [spring-2025/](./spring-2025/).
+## Key Contributions
 
-## Deliverables
+- **Visual Concept Grounding**: A novel preprocessing step using GPT-4o to convert abstract user text into CLIP-compatible visual descriptions, directly addressing CLIP's weakness on non-literal language.
 
-All deliverables are described in [deliverables.md](./deliverables.md).
+- **Hybrid Retrieval-Generation Pipeline**: Combines semantic image retrieval with on-demand DALL·E 3 generation, ensuring relevant output even when the image library lacks suitable matches.
 
-Summary of what you will produce:
-- Project paper (8-12 pages, conference format)
-- Code repository (production quality)
-- Working demo
-- Presentation slides
-- Conference-style poster
+- **Explainable Recommendations**: Each recommended image is accompanied by a GPT-4o-generated natural-language justification, improving user trust and interpretability.
 
-## FAQ
+- **Rigorous Baseline Comparison**: System is benchmarked against three baselines with quantitative metrics (CLIP score, NDCG, user preference), ensuring the contribution is measurable and reproducible.
 
-**Can I do this project alone or with more than 4 people?**
-No. Teams must have 2-4 members.
+---
 
-**Can I use any model provider (OpenAI, Anthropic, Google, etc.)?**
-Yes. Use whatever works best for your project.
+## Potential Data Sources
 
-**What if I want to propose a different project idea?**
-Discuss with the professor before Milestone 1. Your proposal should have a clear problem statement, feasible scope for 6 weeks, and an AI agent architecture.
-
-## Resources
-
-- Course [bookmarks](https://github.com/gu-dsan6725/bookmarks/tree/main) repository
-- [LangChain](https://python.langchain.com/), [LlamaIndex](https://docs.llamaindex.ai/), [Claude Agent SDK](https://github.com/anthropics/anthropic-cookbook)
+- **Public image datasets**: e.g., Unsplash, Pexels (free stock photo platforms), or academic datasets such as MS-COCO and ImageNet
+- **Web-crawled data**: e.g., LAION-5B, which is also the type of large-scale image-text pair data that CLIP itself was trained on
+- **Custom annotated libraries**: manually curated and labeled thematic image collections
