@@ -1,0 +1,11 @@
+torch
+transformers
+accelerate
+numpy
+pandas
+pillow
+python-dotenv
+faiss-cpu
+tqdm
+requests
+scikit-learn
