@@ -10,10 +10,14 @@ This repo provides project ideas but you are not limited to these. You can explo
 
 This repo is organized into the following parts:
 
-- [Project Ideas](#project-ideas)
-- [Deliverables](#deliverables)
-- [FAQ](#faq)
-- [Resources](#resources)
+- [DSAN 6725 Final Project](#dsan-6725-final-project)
+  - [Overview](#overview)
+  - [Project Ideas](#project-ideas)
+    - [Spring 2026 Projects](#spring-2026-projects)
+    - [Archived Projects](#archived-projects)
+  - [Deliverables](#deliverables)
+  - [FAQ](#faq)
+  - [Resources](#resources)
 
 ## Project Ideas
 
