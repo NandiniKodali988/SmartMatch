@@ -1,0 +1,129 @@
+============================================================
+  SmartMatch — Qwen Visual Grounding & Justification Agents
+  Sample Output
+============================================================
+
+
+------------------------------------------------------------
+PART 1: Visual Concept Grounding (agent.py)
+------------------------------------------------------------
+Converts abstract/emotional user text into structured visual
+descriptions that SigLIP-2 can use for image retrieval.
+
+------------------------------------------------------------
+
+Input: "feeling burnt out after a long week"
+
+Grounding visual concepts for: 'feeling burnt out after a long week'
+Visual grounding successful.
+
+{
+  "visual_description": "A person slumped at a cluttered desk, head resting on their arms, surrounded by empty coffee cups and scattered papers under dim lamp light",
+  "scene": "home office, nighttime, desk",
+  "mood": "exhausted, burnt out, drained",
+  "style": "candid, warm low-light, realistic"
+}
+
+------------------------------------------------------------
+
+Input: "celebrating a new job offer"
+
+Grounding visual concepts for: 'celebrating a new job offer'
+Visual grounding successful.
+
+{
+  "visual_description": "A person jumping with arms raised in a bright open space, holding a phone displaying good news, wide smile, confetti or balloons in the background",
+  "scene": "outdoors or living room, daytime, celebratory",
+  "mood": "elated, triumphant, excited",
+  "style": "vibrant, high energy, candid"
+}
+
+------------------------------------------------------------
+
+Input: "that quiet Sunday morning feeling"
+
+Grounding visual concepts for: 'that quiet Sunday morning feeling'
+Visual grounding successful.
+
+{
+  "visual_description": "A person sitting by a window with soft morning light, holding a warm mug, a book or newspaper nearby, plants on the windowsill, everything still and unhurried",
+  "scene": "home, morning, window seat or kitchen table",
+  "mood": "peaceful, unhurried, content",
+  "style": "soft natural light, warm tones, lifestyle"
+}
+
+------------------------------------------------------------
+
+Input: "overwhelmed by city life"
+
+Grounding visual concepts for: 'overwhelmed by city life'
+Visual grounding successful.
+
+{
+  "visual_description": "A lone figure standing still on a crowded sidewalk as blurred pedestrians rush past, tall buildings looming overhead, city noise implied by the visual chaos",
+  "scene": "urban street, daytime, busy intersection",
+  "mood": "overwhelmed, lost, isolated in a crowd",
+  "style": "motion blur, candid street photography, high contrast"
+}
+
+------------------------------------------------------------
+
+Input: "finally finished my first marathon"
+
+Grounding visual concepts for: 'finally finished my first marathon'
+Visual grounding successful.
+
+{
+  "visual_description": "A runner crossing a finish line with arms outstretched, face showing exhaustion and pure joy, a medal being placed around their neck, crowds cheering in the background",
+  "scene": "outdoor race course, finish line, daytime",
+  "mood": "triumphant, relieved, proud",
+  "style": "action shot, natural light, documentary"
+}
+
+
+------------------------------------------------------------
+PART 2: Justification Generation (justification_agent.py)
+------------------------------------------------------------
+Takes the original user text and a list of retrieved images
+(from SigLIP-2 / FAISS), and explains why each image is a
+good match in plain language.
+
+------------------------------------------------------------
+
+User text: "feeling burnt out after a long week"
+
+Retrieved images:
+  - photo_id: abc123 | score: 0.87
+    caption: "a person sitting alone at a desk late at night,
+              surrounded by empty coffee cups"
+  - photo_id: def456 | score: 0.81
+    caption: "a quiet park bench with fallen autumn leaves"
+
+Generating justifications for 2 image(s)...
+  [1/2] Justifying image abc123...
+  [2/2] Justifying image def456...
+Done generating justifications.
+
+------------------------------------------------------------
+
+Image: abc123  (score: 0.87)
+Justification:
+  This image perfectly captures the exhaustion of burnout —
+  the lonely figure hunched at a desk surrounded by empty
+  coffee cups visually tells the story of pushing through a
+  grueling week on caffeine and willpower alone. The late-
+  night setting amplifies the sense of depletion, making it
+  an immediate and relatable match.
+
+------------------------------------------------------------
+
+Image: def456  (score: 0.81)
+Justification:
+  This image perfectly captures the need for rest and quiet
+  reflection that comes with burnout — a solitary bench
+  surrounded by fallen leaves conveys a sense of pause and
+  stillness after exhaustion. The emptiness of the scene
+  mirrors the drained, introspective state that follows an
+  overwhelming week.
+
+------------------------------------------------------------
