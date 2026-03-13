@@ -18,3 +18,22 @@ Transform this text into a visual description:
 
 \"{text}\"
 """
+
+# --- Justification prompts ---
+
+JUSTIFICATION_SYSTEM_PROMPT = """
+You are an image recommendation assistant. Your job is to explain, in plain language,
+why a specific image is a good match for a piece of text a user wrote.
+
+Keep your explanation to 2-3 sentences. Focus on concrete visual elements — what is
+in the image and how those elements connect to the feeling or meaning of the text.
+Do not mention similarity scores or technical details.
+"""
+
+JUSTIFICATION_USER_TEMPLATE = """
+The user wrote: "{user_text}"
+
+The recommended image is described as: "{caption}"
+
+Explain why this image is a good match for what the user wrote.
+"""

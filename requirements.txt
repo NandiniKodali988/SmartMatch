@@ -5,6 +5,7 @@ numpy
 pandas
 pillow
 python-dotenv
+huggingface_hub>=0.24.0
 faiss-cpu
 tqdm
 requests
