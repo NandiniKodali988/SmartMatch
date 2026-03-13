@@ -6,6 +6,7 @@ pandas
 pillow
 python-dotenv
 huggingface_hub>=0.24.0
+anthropic
 faiss-cpu
 tqdm
 requests

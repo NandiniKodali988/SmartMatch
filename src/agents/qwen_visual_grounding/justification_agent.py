@@ -1,5 +1,5 @@
 import os
-from huggingface_hub import InferenceClient
+import anthropic
 from dotenv import load_dotenv
 try:
     from prompts import JUSTIFICATION_SYSTEM_PROMPT, JUSTIFICATION_USER_TEMPLATE  # when run directly
@@ -8,7 +8,7 @@ except ImportError:
 
 load_dotenv()
 
-MODEL = "Qwen/Qwen2.5-VL-72B-Instruct"
+MODEL = os.getenv("GROUNDING_MODEL", "claude-haiku-4-5-20251001")
 
 
 class QwenJustificationAgent:
@@ -19,7 +19,7 @@ class QwenJustificationAgent:
     """
 
     def __init__(self):
-        self.client = InferenceClient(api_key=os.environ["HF_TOKEN"])
+        self.client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
     def run(self, user_text: str, images: list) -> list:
         """
@@ -48,10 +48,11 @@ class QwenJustificationAgent:
 
     def _justify(self, user_text: str, caption: str) -> str:
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.messages.create(
                 model=MODEL,
+                max_tokens=200,
+                system=JUSTIFICATION_SYSTEM_PROMPT,
                 messages=[
-                    {"role": "system", "content": JUSTIFICATION_SYSTEM_PROMPT},
                     {
                         "role": "user",
                         "content": JUSTIFICATION_USER_TEMPLATE.format(
@@ -60,9 +61,8 @@ class QwenJustificationAgent:
                         ),
                     },
                 ],
-                max_tokens=200,
             )
-            return response.choices[0].message.content.strip()
+            return response.content[0].text.strip()
 
         except Exception as e:
             print(f"    Warning: justification failed ({e}). Skipping.")

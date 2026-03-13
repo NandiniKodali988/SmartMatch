@@ -1,7 +1,7 @@
 import os
 import json
 import time
-from huggingface_hub import InferenceClient
+import anthropic
 from dotenv import load_dotenv
 try:
     from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when run directly
@@ -10,18 +10,18 @@ except ImportError:
 
 load_dotenv()
 
-MODEL = "Qwen/Qwen2.5-VL-72B-Instruct"
+MODEL = os.getenv("GROUNDING_MODEL", "claude-haiku-4-5-20251001")
 REQUIRED_KEYS = {"visual_description", "scene", "mood", "style"}
 
 
 class QwenVisualGroundingAgent:
     """
-    Uses Qwen2.5-VL to convert abstract user text into a structured
-    visual description that SigLIP-2 can use for image retrieval.
+    Converts abstract user text into a structured visual description
+    that SigLIP-2 can use for image retrieval.
     """
 
     def __init__(self, max_retries=3):
-        self.client = InferenceClient(api_key=os.environ["HF_TOKEN"])
+        self.client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
         self.max_retries = max_retries
 
     def run(self, text: str) -> dict:
@@ -48,17 +48,21 @@ class QwenVisualGroundingAgent:
                     return self._fallback(text)
 
     def _call_model(self, text: str) -> dict:
-        response = self.client.chat.completions.create(
+        response = self.client.messages.create(
             model=MODEL,
+            max_tokens=512,
+            system=SYSTEM_PROMPT,
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": USER_PROMPT_TEMPLATE.format(text=text)},
             ],
-            response_format={"type": "json_object"},
-            max_tokens=512,
         )
-        raw = response.choices[0].message.content
-        return json.loads(raw)
+        raw = response.content[0].text.strip()
+        # strip markdown code fences if the model wraps its output
+        if raw.startswith("```"):
+            raw = raw.split("```", 2)[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        return json.loads(raw.strip())
 
     def _validate(self, result: dict):
         missing = REQUIRED_KEYS - result.keys()
