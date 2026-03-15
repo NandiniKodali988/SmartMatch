@@ -1,0 +1,902 @@
+[
+  {
+    "input_text": "fresh blueberries",
+    "grounding_output": {
+      "visual_description": "A close-up arrangement of plump, deep purple-blue blueberries with a delicate white bloom coating, some glistening with fresh moisture or morning dew, nestled together to show their round, dimpled surfaces.",
+      "scene": "macro photography, fruit close-up, natural light",
+      "mood": "fresh, vibrant, appetizing, clean",
+      "style": "food photography, shallow depth of field, bright natural lighting"
+    }
+  },
+  {
+    "input_text": "icebergs of iceland s vatnajokull",
+    "grounding_output": {
+      "visual_description": "Massive chunks of translucent blue and white ice floating in a glacial lagoon, with jagged peaks and caverns carved into their surfaces, reflecting the northern sky.",
+      "scene": "glacial lagoon, iceland, j\u00f6kuls\u00e1rl\u00f3n, winter, daylight, ice formations, water",
+      "mood": "awe-inspiring, serene, otherworldly, cold, majestic",
+      "style": "documentary photography, natural lighting, wide-angle landscape, crisp detail"
+    }
+  },
+  {
+    "input_text": "furry alley cat",
+    "grounding_output": {
+      "visual_description": "A scraggly, unkempt cat with matted and disheveled fur prowling through a narrow urban alleyway lined with weathered brick walls and scattered debris.",
+      "scene": "narrow alley, urban street, brick walls, ground level",
+      "mood": "gritty, rough, street-worn, survivalist",
+      "style": "documentary photography, naturalistic, street photography, candid"
+    }
+  },
+  {
+    "input_text": "man entering ocean",
+    "grounding_output": {
+      "visual_description": "A solitary man wading into the water, his silhouette moving from sandy beach toward the waves, with water rising around his legs as he walks deeper into the ocean.",
+      "scene": "beach, ocean, shoreline, daytime, water",
+      "mood": "contemplative, peaceful, adventurous, solitary",
+      "style": "naturalistic, documentary-style photography, outdoor, clear or golden hour lighting"
+    }
+  },
+  {
+    "input_text": "hill cabin",
+    "grounding_output": {
+      "visual_description": "A rustic wooden cabin nestled on a hillside surrounded by dense forest, with a clear view of rolling mountains or valleys stretching into the distance.",
+      "scene": "mountainous landscape, hillside, forest clearing, rural wilderness, cabin exterior",
+      "mood": "peaceful, isolated, serene, contemplative",
+      "style": "natural lighting, landscape photography, rustic, pastoral"
+    }
+  },
+  {
+    "input_text": "woman in a sunlit meadow",
+    "grounding_output": {
+      "visual_description": "A woman standing or walking through a lush green meadow bathed in golden sunlight, with wildflowers scattered across the grass and soft shadows cast by her figure on the bright ground.",
+      "scene": "open meadow, daytime, natural landscape, wildflowers, grassland",
+      "mood": "peaceful, serene, joyful, bright, free",
+      "style": "natural lighting, warm tones, soft focus, outdoor photography"
+    }
+  },
+  {
+    "input_text": "cagliari 2017",
+    "grounding_output": {
+      "visual_description": "A sunlit Mediterranean coastal cityscape with terracotta-roofed buildings cascading down a hillside toward a sparkling blue harbor, featuring historic architecture and vibrant street life typical of Sardinia's capital.",
+      "scene": "Mediterranean coastal city, hillside, historic buildings, harbor, Cagliari, 2017",
+      "mood": "warm, inviting, timeless, nostalgic, sunny",
+      "style": "documentary photography, warm color tones, golden hour lighting, travel photography"
+    }
+  },
+  {
+    "input_text": "peaks",
+    "grounding_output": {
+      "visual_description": "Snow-capped mountain peaks rising dramatically against a clear sky, their sharp summits piercing upward with jagged edges and steep rocky faces bathed in natural light.",
+      "scene": "mountain range, high altitude, alpine landscape, daytime",
+      "mood": "majestic, grand, awe-inspiring, powerful",
+      "style": "landscape photography, crisp detail, natural lighting, expansive perspective"
+    }
+  },
+  {
+    "input_text": "i took this star trail at mabini batangas philippines way back in 2015 it was the first time i took this kind of star trail utilizing the position of the north star polaris at the sky which seems to produce circular path of stars because the earth rotates with polaris right above the rotational axis",
+    "grounding_output": {
+      "visual_description": "A long-exposure photograph showing concentric circular trails of stars swirling around a bright central point (Polaris) in a dark night sky, with a dark tropical landscape silhouetted in the foreground.",
+      "scene": "rural coastal area, tropical landscape, night sky, beach or hillside vantage point, Philippines",
+      "mood": "awe-inspiring, serene, contemplative, wonder-filled, cosmic",
+      "style": "long-exposure astrophotography, star trails, high contrast, dark skies, technical photography"
+    }
+  },
+  {
+    "input_text": "game of thrones",
+    "grounding_output": {
+      "visual_description": "A medieval fantasy landscape with towering stone castles, iron thrones, dragon silhouettes, and armored warriors amid dramatic, stormy skies and ancient battlefields.",
+      "scene": "medieval castle, throne room, fantasy landscape, battle field, dark fantasy setting",
+      "mood": "epic, intense, dramatic, dark, powerful, ominous",
+      "style": "cinematic, high fantasy, dark fantasy, dramatic lighting, grand scale"
+    }
+  },
+  {
+    "input_text": "hiking up the hills",
+    "grounding_output": {
+      "visual_description": "A person walking up a steep hillside with natural terrain, grass, and earth beneath their feet, surrounded by expansive landscape views stretching into the distance.",
+      "scene": "hillside, natural landscape, outdoor terrain, daytime",
+      "mood": "adventurous, energetic, peaceful, determined",
+      "style": "outdoor photography, natural lighting, wide-angle perspective"
+    }
+  },
+  {
+    "input_text": "ocean sunset",
+    "grounding_output": {
+      "visual_description": "A golden and orange sun descends toward the horizon above a calm or gently rippling ocean surface, casting warm light and reflections across the water.",
+      "scene": "beach, ocean, horizon, coastal landscape",
+      "mood": "peaceful, serene, tranquil, warm, romantic",
+      "style": "landscape photography, warm lighting, golden hour, natural light"
+    }
+  },
+  {
+    "input_text": "full moon over the mountains",
+    "grounding_output": {
+      "visual_description": "A large, luminous full moon hanging in the night sky above a silhouetted mountain range, casting soft silver light across the peaks and valleys.",
+      "scene": "mountain landscape, nighttime, clear sky, wilderness",
+      "mood": "serene, majestic, peaceful, awe-inspiring",
+      "style": "landscape photography, night sky, high contrast, ethereal"
+    }
+  },
+  {
+    "input_text": "mountain valley in zasele",
+    "grounding_output": {
+      "visual_description": "A sweeping mountain valley with dramatic peaks framing verdant slopes and a winding river or stream cutting through the lush terrain below, nestled in the Carpathian region of Romania.",
+      "scene": "mountain valley, Carpathian mountains, alpine meadows, flowing water, forested slopes, rural landscape",
+      "mood": "serene, majestic, peaceful, timeless, grand",
+      "style": "landscape photography, natural daylight, expansive vista, saturated greens and earth tones"
+    }
+  },
+  {
+    "input_text": "photographing yosemite",
+    "grounding_output": {
+      "visual_description": "A photographer with a camera on a tripod positioned on a granite outcrop, capturing the dramatic granite cliffs and waterfalls of Yosemite Valley bathed in golden light.",
+      "scene": "Yosemite Valley, granite cliffs, waterfalls, mountain landscape, rocky terrain",
+      "mood": "awe-struck, serene, contemplative, majestic",
+      "style": "landscape photography, natural lighting, wide-angle composition, golden hour"
+    }
+  },
+  {
+    "input_text": "bird on sandy beach",
+    "grounding_output": {
+      "visual_description": "A solitary bird standing or walking on soft, golden sand with gentle waves and ocean visible in the background under natural daylight.",
+      "scene": "sandy beach, coastline, shallow water, seaside",
+      "mood": "peaceful, serene, natural, tranquil",
+      "style": "naturalistic photography, daylight, coastal landscape"
+    }
+  },
+  {
+    "input_text": "kungstr dg rden cherry blossom love the work buy me a coffee paypal a smit mac com",
+    "grounding_output": {
+      "visual_description": "Delicate pink cherry blossoms in full bloom scattered across a garden pathway, with soft petals falling gently to the ground in dappled sunlight, evoking a serene and romantic atmosphere.",
+      "scene": "garden, cherry blossom grove, spring pathway, outdoor setting",
+      "mood": "romantic, serene, peaceful, tender, appreciative",
+      "style": "soft focus photography, natural lighting, dreamy, botanical"
+    }
+  },
+  {
+    "input_text": "wintertime czech",
+    "grounding_output": {
+      "visual_description": "A picturesque Czech town square dusted with fresh snow, featuring colorful historic buildings with steep roofs, a frozen fountain or monument in the center, and bare trees laden with frost under a grey, overcast winter sky.",
+      "scene": "historic town square, snow-covered streets, Czech architecture, winter landscape, overcast day",
+      "mood": "serene, quiet, peaceful, nostalgic, crisp",
+      "style": "naturalistic photography, cool color palette, soft diffused winter light, European heritage aesthetic"
+    }
+  },
+  {
+    "input_text": "wind in the gray mane",
+    "grounding_output": {
+      "visual_description": "A close-up of flowing gray hair or mane caught mid-motion, with individual strands lifting and rippling dramatically as if swept by a strong breeze against a soft, muted background.",
+      "scene": "outdoor or windswept environment, natural lighting, minimalist background",
+      "mood": "dynamic, ethereal, contemplative, graceful",
+      "style": "soft-focus photography, cinematic, textured, naturalistic"
+    }
+  },
+  {
+    "input_text": "mystic village",
+    "grounding_output": {
+      "visual_description": "A historic village nestled in misty fog with ancient stone buildings, narrow cobblestone pathways, and ethereal mist curling around traditional architecture, lantern lights glowing softly through the haze.",
+      "scene": "rural village, cobblestone streets, historic buildings, fog-covered landscape, evening time",
+      "mood": "mysterious, enchanting, ethereal, atmospheric, timeless",
+      "style": "cinematic, moody lighting, soft focus, fantasy-inspired, atmospheric fog photography"
+    }
+  },
+  {
+    "input_text": "take a trip to the cairngorm reindeer centre in aviemore scotland and see britain s only free ranging reindeer herd",
+    "grounding_output": {
+      "visual_description": "A herd of reindeer with large antlers grazing across a snowy, mountainous Scottish landscape with visitors in winter clothing observing them from a distance in the foreground.",
+      "scene": "Cairngorms mountains, Aviemore Scotland, snowy terrain, alpine landscape, winter wilderness",
+      "mood": "awe-inspiring, peaceful, adventurous, wild yet accessible",
+      "style": "nature photography, documentary style, crisp daylight, landscape photography"
+    }
+  },
+  {
+    "input_text": "thunderstorm over the trees",
+    "grounding_output": {
+      "visual_description": "Dark, roiling storm clouds gathering above a dense forest canopy, with lightning streaks illuminating the treetops and heavy rain beginning to fall.",
+      "scene": "forest, woodland, sky, stormy weather, daytime to dusk",
+      "mood": "ominous, dramatic, powerful, threatening",
+      "style": "dramatic weather photography, high contrast, atmospheric"
+    }
+  },
+  {
+    "input_text": "white sky behind dark forest",
+    "grounding_output": {
+      "visual_description": "A dense, dark silhouetted forest treeline stands in sharp contrast against a pale, overcast white or light gray sky above.",
+      "scene": "forest, woodland, treeline, overcast sky",
+      "mood": "mysterious, moody, contemplative, somber",
+      "style": "high contrast, silhouette, natural landscape, minimalist"
+    }
+  },
+  {
+    "input_text": "lake in a mountain valley",
+    "grounding_output": {
+      "visual_description": "A pristine alpine lake nestled between towering mountain peaks, with clear water reflecting snow-capped summits and forested slopes under natural daylight.",
+      "scene": "mountain valley, alpine lake, evergreen forest, mountain peaks, high altitude",
+      "mood": "serene, peaceful, majestic, tranquil, awe-inspiring",
+      "style": "landscape photography, natural lighting, wide angle, scenic vista"
+    }
+  },
+  {
+    "input_text": "cool oasis",
+    "grounding_output": {
+      "visual_description": "A serene pool of crystal-clear turquoise water surrounded by lush palm trees and verdant vegetation, with cool shadows cast across the water's surface under bright sunlight, inviting and refreshing.",
+      "scene": "tropical oasis, desert landscape, palm grove, water pool, sandy surroundings",
+      "mood": "peaceful, refreshing, tranquil, inviting, serene",
+      "style": "bright natural lighting, crisp photography, vibrant colors, tropical landscape"
+    }
+  },
+  {
+    "input_text": "tall snow capped mountain peak",
+    "grounding_output": {
+      "visual_description": "A majestic mountain peak reaching toward the sky with its summit covered in pristine white snow, sharp angular ridges defining its silhouette against the atmosphere.",
+      "scene": "mountain landscape, alpine environment, high elevation, clear sky",
+      "mood": "grand, awe-inspiring, serene, majestic",
+      "style": "landscape photography, natural lighting, high contrast, sharp detail"
+    }
+  },
+  {
+    "input_text": "horse grazing in the shade of conifers",
+    "grounding_output": {
+      "visual_description": "A horse with a calm expression stands or lowers its head to graze on green grass beneath the long shadows and dappled light filtering through tall coniferous trees with dense evergreen foliage.",
+      "scene": "forest clearing, under conifer trees, pastoral grassland, daytime",
+      "mood": "peaceful, serene, natural, tranquil",
+      "style": "naturalistic photography, dappled sunlight, soft shadows, outdoor"
+    }
+  },
+  {
+    "input_text": "dried flowers in a vase",
+    "grounding_output": {
+      "visual_description": "A collection of withered, papery flowers with faded petals and brittle stems arranged in a ceramic or glass vase, their muted earthy tones creating a delicate, textured composition.",
+      "scene": "indoor, still life, close-up, home interior",
+      "mood": "nostalgic, quiet, melancholic, peaceful",
+      "style": "soft focus, natural lighting, vintage aesthetic, botanical detail"
+    }
+  },
+  {
+    "input_text": "a lighter and a sunset",
+    "grounding_output": {
+      "visual_description": "A metal lighter held up in the foreground with a warm, glowing sunset sky filling the background, where orange, pink, and golden hues blend across the horizon.",
+      "scene": "outdoor landscape, horizon, dusk, golden hour",
+      "mood": "warm, contemplative, serene, nostalgic",
+      "style": "natural light photography, warm color palette, soft focus background"
+    }
+  },
+  {
+    "input_text": "lost river",
+    "grounding_output": {
+      "visual_description": "A winding waterway disappearing into dense vegetation and mist, with shallow waters reflecting overcast skies as it vanishes into wilderness or underground darkness.",
+      "scene": "forest, overgrown riverbed, misty landscape, dense vegetation, water disappearing into terrain",
+      "mood": "mysterious, abandoned, melancholic, eerie, forgotten",
+      "style": "moody landscape photography, soft focus, atmospheric, natural lighting"
+    }
+  },
+  {
+    "input_text": "fog descending on a pine forest",
+    "grounding_output": {
+      "visual_description": "Dense white fog rolling through tall pine trees, obscuring the forest depths while creating layers of misty silhouettes against the greens and browns of the woodland landscape.",
+      "scene": "evergreen forest, misty woods, natural landscape, daytime",
+      "mood": "mysterious, atmospheric, ethereal, serene, contemplative",
+      "style": "nature photography, soft-focus, atmospheric lighting, muted colors"
+    }
+  },
+  {
+    "input_text": "nighttime metropolis",
+    "grounding_output": {
+      "visual_description": "A sprawling cityscape illuminated by countless electric lights, skyscrapers piercing a dark sky with glowing windows, streaks of car headlights on busy streets below, and neon signs reflecting off wet pavement.",
+      "scene": "urban skyline, downtown district, busy streets, night",
+      "mood": "energetic, vibrant, bustling, dynamic",
+      "style": "urban photography, long exposure, high contrast lighting, cinematic"
+    }
+  },
+  {
+    "input_text": "cloudy coastline",
+    "grounding_output": {
+      "visual_description": "A dramatic rocky or sandy coastline where gray, churning waves meet the shore, all beneath a heavy blanket of overcast clouds that obscure the sky",
+      "scene": "coastline, beach, ocean, cloudy sky, seaside",
+      "mood": "moody, somber, contemplative, dramatic",
+      "style": "natural light photography, overcast, atmospheric"
+    }
+  },
+  {
+    "input_text": "you can support me via paypal",
+    "grounding_output": {
+      "visual_description": "A clean, minimalist composition featuring a PayPal logo or payment interface displayed on a smartphone or computer screen, with soft lighting highlighting the digital platform against a neutral background.",
+      "scene": "indoor, digital interface, desk or workspace, modern setting",
+      "mood": "helpful, straightforward, professional, accessible",
+      "style": "clean, digital photography, bright lighting, minimalist, contemporary"
+    }
+  },
+  {
+    "input_text": "dirt path in foggy woods",
+    "grounding_output": {
+      "visual_description": "A narrow dirt trail disappearing into dense woodland shrouded in thick fog, with trees barely visible through the mist and soft, diffused light filtering through the haze.",
+      "scene": "forest path, woodland trail, foggy woods, mist-covered landscape",
+      "mood": "mysterious, ethereal, quiet, contemplative, obscured",
+      "style": "atmospheric photography, soft focus, natural light, moody landscape"
+    }
+  },
+  {
+    "input_text": "misty machu picchu",
+    "grounding_output": {
+      "visual_description": "Ancient stone terraces and structures of Machu Picchu emerging from thick layers of white and gray mist, with mountain peaks partially obscured by clouds in the background.",
+      "scene": "mountain ruins, Machu Picchu, high altitude, clouds, misty landscape",
+      "mood": "mysterious, ethereal, serene, atmospheric",
+      "style": "landscape photography, soft focus, overcast, atmospheric haze"
+    }
+  },
+  {
+    "input_text": "frozen lake in the mountains",
+    "grounding_output": {
+      "visual_description": "A vast, pristine sheet of ice stretching across a mountain valley, its crystalline surface reflecting pale winter light, bordered by snow-capped peaks rising dramatically in the distance.",
+      "scene": "alpine landscape, frozen lake, mountain valley, winter, snow-covered peaks",
+      "mood": "serene, majestic, silent, cold, tranquil",
+      "style": "landscape photography, natural light, high altitude, expansive vista"
+    }
+  },
+  {
+    "input_text": "playing a tourist in my own city",
+    "grounding_output": {
+      "visual_description": "A person holding a map or camera, looking up at familiar landmarks or architecture around them with wide-eyed wonder, as if seeing their own cityscape for the first time.",
+      "scene": "urban street, city landmarks, downtown area, familiar cityscape",
+      "mood": "curious, wonder-struck, detached, rediscovery, playful",
+      "style": "candid photography, bright daylight, observational, tourist perspective"
+    }
+  },
+  {
+    "input_text": "hiking by the sheep",
+    "grounding_output": {
+      "visual_description": "A person walking along a grassy mountain trail with a flock of woolly sheep grazing peacefully on the hillside nearby, their white fleece contrasting against the green landscape.",
+      "scene": "alpine meadow, mountain trail, pastoral hillside, countryside",
+      "mood": "peaceful, serene, pastoral, rustic",
+      "style": "natural landscape photography, daylight, documentary"
+    }
+  },
+  {
+    "input_text": "low craggy mountain",
+    "grounding_output": {
+      "visual_description": "A rugged, jagged mountain peak with exposed rocky outcrops and irregular surfaces rising against the sky, featuring sharp ridges and weathered stone formations.",
+      "scene": "mountain landscape, rocky terrain, outdoor wilderness, high altitude",
+      "mood": "stark, dramatic, austere, imposing",
+      "style": "landscape photography, natural lighting, high contrast, detailed texture"
+    }
+  },
+  {
+    "input_text": "shearwaters are medium sized long winged seabirds in the petrel family procellariidae photo by rodolfo mari",
+    "grounding_output": {
+      "visual_description": "A sleek, dark-colored seabird with elongated wings outstretched, skimming low over ocean waves with a streamlined body built for gliding and diving.",
+      "scene": "open ocean, seascape, coastal waters, wave-swept surface",
+      "mood": "wild, free, natural, serene",
+      "style": "wildlife photography, naturalistic, documentary, high contrast"
+    }
+  },
+  {
+    "input_text": "misty day in yosemite valley",
+    "grounding_output": {
+      "visual_description": "Towering granite cliffs partially obscured by thick, rolling fog and mist, with pine trees faintly visible through the haze in a vast mountain valley below.",
+      "scene": "Yosemite Valley, mountain landscape, granite formations, coniferous forest, fog-covered valley",
+      "mood": "serene, ethereal, mysterious, tranquil, atmospheric",
+      "style": "landscape photography, soft focus, natural lighting, misty atmosphere, muted colors"
+    }
+  },
+  {
+    "input_text": "rotting leaves on a forest path",
+    "grounding_output": {
+      "visual_description": "A winding forest path covered with decomposing leaves in shades of brown and rust, fallen branches scattered across the ground, with moisture and fungi visible on the decaying organic matter.",
+      "scene": "forest path, woodland floor, natural trail, autumn or late season",
+      "mood": "eerie, somber, decay, desolate, natural mortality",
+      "style": "naturalistic photography, earthy tones, macro detail, damp lighting"
+    }
+  },
+  {
+    "input_text": "brown leaves on white",
+    "grounding_output": {
+      "visual_description": "Crisp brown autumn leaves arranged on or scattered across a clean white surface, showing texture and veining details with warm earthy tones contrasting against the bright background.",
+      "scene": "close-up, studio, minimalist composition, white background",
+      "mood": "peaceful, serene, natural, seasonal",
+      "style": "flat lay photography, high contrast, clean aesthetic, product photography"
+    }
+  },
+  {
+    "input_text": "dry winter grassland by the mountains",
+    "grounding_output": {
+      "visual_description": "A barren grassland with golden-brown dried grasses stretching toward distant snow-capped mountain peaks under a pale winter sky",
+      "scene": "mountain valley, grassland, winter landscape, high altitude",
+      "mood": "desolate, serene, stark, cold",
+      "style": "landscape photography, natural lighting, earthy tones"
+    }
+  },
+  {
+    "input_text": "sea foam on rocks at sunset",
+    "grounding_output": {
+      "visual_description": "White, delicate sea foam cascading over dark weathered rocks as golden and orange sunlight reflects off the water and illuminates the mist in the air",
+      "scene": "rocky coastline, ocean, sunset, golden hour",
+      "mood": "serene, tranquil, peaceful, atmospheric",
+      "style": "natural light photography, warm tones, soft focus, coastal landscape"
+    }
+  },
+  {
+    "input_text": "bird s eye view of snowy mountains",
+    "grounding_output": {
+      "visual_description": "A vast panoramic landscape shot from high above showing multiple snow-covered mountain peaks and ridges stretching across the frame, with deep valleys and shadows creating dramatic topography.",
+      "scene": "mountain range, snowy peaks, aerial view, alpine terrain, winter landscape",
+      "mood": "majestic, serene, expansive, awe-inspiring",
+      "style": "aerial photography, high-altitude perspective, landscape photography, crisp clarity"
+    }
+  },
+  {
+    "input_text": "tropical beach",
+    "grounding_output": {
+      "visual_description": "A pristine sandy beach with turquoise water lapping at the shore, lined with swaying palm trees and lush green vegetation under bright sunshine.",
+      "scene": "beach, sandy shore, tropical coast, palm trees, clear water",
+      "mood": "serene, peaceful, inviting, idyllic",
+      "style": "bright, saturated colors, natural lighting, daytime, tropical photography"
+    }
+  },
+  {
+    "input_text": "conifer tree trunks",
+    "grounding_output": {
+      "visual_description": "Tall, straight evergreen tree trunks with dark bark rising upward, creating vertical lines through a forest scene with green needled foliage visible at the top and sides.",
+      "scene": "forest, woodland, coniferous forest, daylight",
+      "mood": "natural, serene, grounded, peaceful",
+      "style": "nature photography, documentary, realistic"
+    }
+  },
+  {
+    "input_text": "hilltops by the sea",
+    "grounding_output": {
+      "visual_description": "Rolling green hills or rocky peaks rising dramatically above a vast, shimmering ocean horizon, with waves meeting the base of the elevated terrain under an open sky.",
+      "scene": "coastal landscape, elevated terrain, seaside, horizon line, natural wilderness",
+      "mood": "expansive, serene, majestic, peaceful",
+      "style": "landscape photography, natural lighting, wide-angle view, scenic"
+    }
+  },
+  {
+    "input_text": "clouds over the caucasus mountains",
+    "grounding_output": {
+      "visual_description": "Towering snow-capped peaks of the Caucasus Mountains emerging dramatically through layers of billowing white and gray clouds that drift across the alpine landscape.",
+      "scene": "mountain range, high altitude, alpine terrain, cloudy sky",
+      "mood": "majestic, serene, ethereal, awe-inspiring",
+      "style": "landscape photography, natural lighting, atmospheric perspective"
+    }
+  },
+  {
+    "input_text": "hikers on a misty slope",
+    "grounding_output": {
+      "visual_description": "A group of hikers silhouetted against a thick fog-shrouded mountainside, their figures partially obscured by rolling mist as they traverse an inclined rocky terrain.",
+      "scene": "mountain slope, misty forest, hiking trail, elevated terrain, layered clouds",
+      "mood": "mysterious, atmospheric, serene, isolated, contemplative",
+      "style": "landscape photography, soft focus, foggy ambiance, natural lighting, ethereal"
+    }
+  },
+  {
+    "input_text": "clouds of candy cotton",
+    "grounding_output": {
+      "visual_description": "Fluffy, pastel-colored cotton candy swirling in soft clouds against a bright sky, with delicate wisps of pink, blue, and white sugar strands catching the light.",
+      "scene": "carnival, fair, outdoor daytime, bright natural lighting",
+      "mood": "whimsical, nostalgic, cheerful, dreamy",
+      "style": "soft focus, vibrant colors, macro photography, candy close-up"
+    }
+  },
+  {
+    "input_text": "this is one of my favorite drone shots i ve taken because of the simplicity of the shot the asymmetry has an interesting wait in this composition just the right timing with the wave kissing the beach and the trails from the road to the beach love it",
+    "grounding_output": {
+      "visual_description": "An aerial drone view of a curved coastline where a single wave meets the sandy beach, with a winding road or path creating diagonal lines leading from inland toward the shore, captured in a moment of perfect timing and natural asymmetrical balance.",
+      "scene": "coastal beach, winding road, ocean waves, sandy shore, aerial perspective",
+      "mood": "serene, contemplative, harmonious, peaceful",
+      "style": "drone photography, bird's eye view, minimalist composition, natural lighting, high angle"
+    }
+  },
+  {
+    "input_text": "little sunset",
+    "grounding_output": {
+      "visual_description": "A small, delicate sun dipping below the horizon, casting warm golden and orange hues across a peaceful landscape with soft, gentle light",
+      "scene": "horizon, landscape, twilight hour, open vista",
+      "mood": "serene, peaceful, gentle, intimate, wistful",
+      "style": "soft focus, warm color palette, natural lighting, dreamy"
+    }
+  },
+  {
+    "input_text": "ocean flight instagram timmossholder",
+    "grounding_output": {
+      "visual_description": "A breathtaking aerial view from an airplane window showing vast turquoise ocean waters below with white clouds scattered across the horizon, captured during golden hour with sunlight streaming through the aircraft window.",
+      "scene": "airplane window view, ocean, sky, clouds, horizon",
+      "mood": "serene, wanderlust, awe-inspiring, peaceful",
+      "style": "travel photography, aerial shot, golden hour lighting, instagram-aesthetic, bright and saturated colors"
+    }
+  },
+  {
+    "input_text": "tiny yellow flowers on green",
+    "grounding_output": {
+      "visual_description": "Delicate clusters of small golden-yellow flowers scattered across lush green foliage and stems, with soft natural light illuminating the petals.",
+      "scene": "garden, meadow, wildflower patch, natural vegetation",
+      "mood": "peaceful, cheerful, serene, fresh",
+      "style": "natural light photography, botanical, detailed macro, bright and airy"
+    }
+  },
+  {
+    "input_text": "woman s silhouette against the setting sun",
+    "grounding_output": {
+      "visual_description": "A woman's dark silhouette stands in sharp profile against a large, glowing orange and golden sun dipping toward the horizon, her figure completely backlit and defined by the bright solar disk behind her.",
+      "scene": "outdoor landscape, horizon, sunset, golden hour",
+      "mood": "serene, contemplative, ethereal, peaceful",
+      "style": "silhouette photography, backlighting, warm color palette, high contrast"
+    }
+  },
+  {
+    "input_text": "misty mountain",
+    "grounding_output": {
+      "visual_description": "A towering mountain peak partially obscured by rolling clouds and fog, with layers of mist creating depth and mystery through the rocky slopes.",
+      "scene": "mountain range, high altitude, cloudy sky, natural landscape",
+      "mood": "mysterious, ethereal, serene, contemplative",
+      "style": "landscape photography, atmospheric, soft focus, muted colors"
+    }
+  },
+  {
+    "input_text": "cloudy canyon",
+    "grounding_output": {
+      "visual_description": "A vast canyon with towering rock walls stretching into the distance, completely shrouded in thick, heavy clouds that roll through the gorge and obscure the upper rim and sky.",
+      "scene": "canyon, gorge, rocky terrain, overcast sky, natural landscape",
+      "mood": "mysterious, moody, atmospheric, dramatic, ethereal",
+      "style": "landscape photography, natural lighting, atmospheric, cinematic"
+    }
+  },
+  {
+    "input_text": "blue red and green parrot",
+    "grounding_output": {
+      "visual_description": "A vibrant parrot with brilliant plumage featuring striking blue, red, and green feathers, perched or in profile with sharp detail on its distinctive head markings and eye.",
+      "scene": "natural habitat, perch, close-up wildlife",
+      "mood": "vibrant, exotic, striking",
+      "style": "wildlife photography, vivid colors, sharp focus"
+    }
+  },
+  {
+    "input_text": "bling surfing at foggy beach",
+    "grounding_output": {
+      "visual_description": "A surfer in glittering, sequined or metallic wetsuit riding a wave on a pristine surfboard, with thick fog rolling across the water and obscuring the horizon behind them.",
+      "scene": "beach, ocean waves, foggy shoreline, misty seascape",
+      "mood": "ethereal, glamorous, mysterious, dreamy",
+      "style": "bright sparkles and reflections, coastal photography, atmospheric fog, luminous"
+    }
+  },
+  {
+    "input_text": "hiker with a large backpack",
+    "grounding_output": {
+      "visual_description": "A person wearing a substantial hiking backpack with multiple straps and compartments, viewed from behind or at an angle that showcases the pack's size and structure.",
+      "scene": "mountain trail, wilderness, outdoor landscape, hiking path",
+      "mood": "adventurous, determined, solitary, purposeful",
+      "style": "outdoor photography, natural lighting, documentary, realistic"
+    }
+  },
+  {
+    "input_text": "surfer on the beach drone view",
+    "grounding_output": {
+      "visual_description": "A lone surfer in a wetsuit stands in the shallow turquoise waters or walks across golden sand, captured from high above in an aerial perspective showing their small figure against the vast expanse of beach and ocean.",
+      "scene": "sandy beach, ocean shoreline, shallow water, coastal landscape",
+      "mood": "peaceful, serene, adventurous, solitary",
+      "style": "aerial photography, drone footage, wide-angle perspective, natural daylight"
+    }
+  },
+  {
+    "input_text": "billowing clouds",
+    "grounding_output": {
+      "visual_description": "Massive white and gray clouds rolling across the sky in waves, their edges soft and billowing outward like ocean swells frozen in air.",
+      "scene": "open sky, daytime, high altitude, expansive horizon",
+      "mood": "ethereal, majestic, serene, awe-inspiring",
+      "style": "naturalistic photography, bright lighting, wide-angle perspective"
+    }
+  },
+  {
+    "input_text": "green valley in the canyon",
+    "grounding_output": {
+      "visual_description": "A lush, verdant valley nestled between towering canyon walls, with emerald grass and vegetation cascading across the valley floor while steep rock formations rise dramatically on both sides.",
+      "scene": "canyon, valley, rolling green landscape, natural rock formations, daylight",
+      "mood": "peaceful, serene, awe-inspiring, isolated, tranquil",
+      "style": "landscape photography, natural lighting, wide-angle perspective, earthy tones"
+    }
+  },
+  {
+    "input_text": "winding road through green mountains",
+    "grounding_output": {
+      "visual_description": "A curving asphalt road stretching through lush, verdant mountain peaks with dense green forests covering the slopes on both sides, the road disappearing into the distance between towering hillsides.",
+      "scene": "mountain landscape, winding road, forest, elevation, daytime",
+      "mood": "peaceful, serene, adventurous, expansive",
+      "style": "landscape photography, natural lighting, wide-angle perspective"
+    }
+  },
+  {
+    "input_text": "brown and green fields follow me on for more images like this",
+    "grounding_output": {
+      "visual_description": "An expansive aerial or landscape view of rolling fields with patches of rich brown earth and vibrant green crops stretching across the horizon in natural layers.",
+      "scene": "rural countryside, open fields, agricultural landscape, expansive horizon",
+      "mood": "peaceful, serene, natural, inviting",
+      "style": "landscape photography, wide-angle perspective, natural daylight, documentary"
+    }
+  },
+  {
+    "input_text": "mountain resort in chalberh ni",
+    "grounding_output": {
+      "visual_description": "A luxurious alpine lodge nestled among snow-capped peaks with warm golden light spilling from large windows, surrounded by evergreen forests and pristine mountain slopes.",
+      "scene": "mountain resort, alpine landscape, snow-covered peaks, forested valley, evening",
+      "mood": "serene, peaceful, welcoming, majestic, cozy",
+      "style": "landscape photography, warm lighting, scenic, architectural"
+    }
+  },
+  {
+    "input_text": "breaking waves on the shore",
+    "grounding_output": {
+      "visual_description": "Foaming white waves crash against the sandy shore with spray misting into the air as the ocean meets the beach in powerful, rhythmic motion.",
+      "scene": "beach, coastline, ocean, shoreline, daytime",
+      "mood": "dynamic, energetic, natural, refreshing",
+      "style": "nature photography, high contrast, action capture"
+    }
+  },
+  {
+    "input_text": "imagine yourself standing at this scenery it took me 20 minutes to tell my dad the basics of photography i described him the golden ratio and how to get the cam to focus on me well he tried it a few times and came up with this shot i m afraid i underestimated my father i m sorry pa",
+    "grounding_output": {
+      "visual_description": "A beautifully composed landscape photograph with a person positioned according to the golden ratio, bathed in warm golden hour light, with professional focus on the subject while the background softly blurs, suggesting a talented but amateur photographer's successful first attempt.",
+      "scene": "outdoor landscape, golden hour, natural scenery, countryside or nature setting",
+      "mood": "proud, humble, touching, heartwarming, surprised admiration",
+      "style": "golden hour photography, soft focus, well-composed framing, warm color grading, amateur photography with professional results"
+    }
+  },
+  {
+    "input_text": "to travel to experience and learn that is to live tenzing norgay",
+    "grounding_output": {
+      "visual_description": "A mountaineer in worn climbing gear standing at a windswept summit, gazing across vast snow-covered peaks and distant valleys, with weathered hands holding climbing equipment and eyes full of wonder and wisdom",
+      "scene": "mountain summit, snow-covered peaks, vast landscapes, high altitude, dawn or dusk lighting",
+      "mood": "adventurous, contemplative, inspired, determined, peaceful",
+      "style": "documentary photography, epic landscape, golden hour, narrative realism"
+    }
+  },
+  {
+    "input_text": "grow on me",
+    "grounding_output": {
+      "visual_description": "A time-lapse sequence showing a plant or vine gradually spreading across a surface, with fresh green shoots emerging and intertwining over days or weeks, symbolizing gradual growth and increasing presence.",
+      "scene": "indoor space, natural light, minimal background, close-up perspective",
+      "mood": "hopeful, gradual, organic, progressive",
+      "style": "macro photography, warm natural lighting, soft focus, botanical detail"
+    }
+  },
+  {
+    "input_text": "a shot from a favorite spot located in aa himandhoo",
+    "grounding_output": {
+      "visual_description": "A scenic photograph taken from a cherished vantage point in Aa Himandhoo, capturing the distinctive landscape, architecture, or natural features that make this location memorable and beloved.",
+      "scene": "Aa Himandhoo, Maldives, local landmark, residential area, tropical island",
+      "mood": "nostalgic, personal, cherished, serene",
+      "style": "documentary photography, location snapshot, natural daylight, authentic"
+    }
+  },
+  {
+    "input_text": "wave sesh",
+    "grounding_output": {
+      "visual_description": "Surfers riding dynamic ocean waves under bright sunlight, with spray and foam creating dynamic movement across the water's surface.",
+      "scene": "beach, ocean, daytime, coastal waters",
+      "mood": "energetic, exhilarating, carefree, adventurous",
+      "style": "action photography, bright natural light, vibrant colors"
+    }
+  },
+  {
+    "input_text": "i went on a desert quad biking adventure in egypt this is the second photo i took of the quad bikes in the desert it would have been perfect to get an evenly spaced line in the desert",
+    "grounding_output": {
+      "visual_description": "A line of quad bikes spreading across a vast, sandy desert landscape with riders navigating the dunes, golden sand stretching to the horizon under bright sunlight.",
+      "scene": "desert, sand dunes, Egypt, daytime, outdoor adventure",
+      "mood": "adventurous, thrilling, expansive, energetic",
+      "style": "action photography, bright daylight, travel documentary, natural lighting"
+    }
+  },
+  {
+    "input_text": "little snek at the detroit zoo",
+    "grounding_output": {
+      "visual_description": "A small snake coiled or resting behind glass or in an enclosure, with natural lighting illuminating its scales, while blurred zoo visitors or signage visible in the background.",
+      "scene": "zoo enclosure, Detroit Zoo, indoor habitat, glass viewing area",
+      "mood": "curious, peaceful, educational, intimate",
+      "style": "documentary photography, natural lighting, shallow depth of field"
+    }
+  },
+  {
+    "input_text": "inside",
+    "grounding_output": {
+      "visual_description": "A view from inside a contained space looking inward, with interior walls, fixtures, or furnishings defining an enclosed environment",
+      "scene": "interior room, indoor space, enclosed area, doorway or threshold",
+      "mood": "sheltered, intimate, introspective, contained",
+      "style": "documentary, perspective-driven, architectural, ambient"
+    }
+  },
+  {
+    "input_text": "hike in the valley of saas",
+    "grounding_output": {
+      "visual_description": "A winding hiking trail cutting through a lush alpine valley with steep rocky mountains rising on both sides, golden sunlight filtering through the peaks, wildflowers dotting the green meadows, and a crystal-clear mountain stream flowing alongside the path.",
+      "scene": "alpine valley, mountain landscape, hiking trail, meadow, rocky peaks, mountain stream",
+      "mood": "serene, peaceful, adventurous, invigorating, majestic",
+      "style": "landscape photography, natural daylight, wide-angle perspective, vibrant colors"
+    }
+  },
+  {
+    "input_text": "palm aid",
+    "grounding_output": {
+      "visual_description": "A close-up of an open palm with a glowing or luminous aid symbol, bandage, or healing light emanating from the center, suggesting comfort and care.",
+      "scene": "close-up, hand, minimalist background, medical or wellness setting",
+      "mood": "caring, hopeful, supportive, gentle",
+      "style": "clean, soft-focus, warm lighting, medical illustration aesthetic"
+    }
+  },
+  {
+    "input_text": "red",
+    "grounding_output": {
+      "visual_description": "A rich, saturated red color dominating the frame, whether as a solid field, natural object, or architectural element bathed in crimson tones.",
+      "scene": "abstract, close-up, or environmental",
+      "mood": "bold, intense, energetic",
+      "style": "vibrant, saturated color photography"
+    }
+  },
+  {
+    "input_text": "initially we were disappointed to see clouds covering the sunset but it ended up being the most stunning part of our trip",
+    "grounding_output": {
+      "visual_description": "A dramatic sunset where thick, layered clouds are backlit by golden and orange light, creating luminous edges and deep shadows that make the clouds appear three-dimensional and theatrical against a darkening sky.",
+      "scene": "open sky, horizon, elevated viewpoint, dusk",
+      "mood": "awe-struck, transcendent, bittersweet beauty, wonder",
+      "style": "golden hour photography, dramatic lighting, atmospheric, warm color palette"
+    }
+  },
+  {
+    "input_text": "preparing for an early morning session",
+    "grounding_output": {
+      "visual_description": "A serene pre-dawn workspace with soft lighting, a steaming cup of coffee, open notebooks or laptop, and minimal clutter arranged with intention, bathed in cool blue-grey morning light streaming through a window.",
+      "scene": "bedroom, home office, indoor, pre-dawn, window with morning light",
+      "mood": "calm, focused, anticipatory, peaceful, energetic yet quiet",
+      "style": "soft natural lighting, minimalist composition, candid lifestyle photography, warm color accents"
+    }
+  },
+  {
+    "input_text": "tulip fields in washington",
+    "grounding_output": {
+      "visual_description": "Vast rolling fields blanketed with vibrant rows of tulips in full bloom, stretching to the horizon under a bright sky, with lush green stems creating geometric patterns across the landscape.",
+      "scene": "rural farmland, expansive fields, spring countryside, Washington state landscape",
+      "mood": "peaceful, serene, vibrant, uplifting, cheerful",
+      "style": "landscape photography, bright natural light, aerial perspective, saturated colors"
+    }
+  },
+  {
+    "input_text": "stretching a few more miles just outside of big sure you still can find a good adventure to the shoreline",
+    "grounding_output": {
+      "visual_description": "A winding coastal road stretching toward distant cliffs and rocky shoreline, with rugged terrain on either side and the vast ocean meeting the horizon under open sky",
+      "scene": "coastal highway, rocky cliffs, Pacific coastline, Big Sur area, shoreline, remote landscape",
+      "mood": "adventurous, expansive, free, serene, awe-inspiring",
+      "style": "landscape photography, natural lighting, wide-angle perspective, travel documentary"
+    }
+  },
+  {
+    "input_text": "outside is free",
+    "grounding_output": {
+      "visual_description": "An open landscape with expansive sky and natural terrain, emphasizing wide-open spaces and absence of barriers or constraints",
+      "scene": "open field, vast horizon, natural landscape, daytime, outdoor wilderness",
+      "mood": "liberation, freedom, expansive, peaceful, unbounded",
+      "style": "wide-angle photography, natural lighting, minimalist composition"
+    }
+  },
+  {
+    "input_text": "falling leaf",
+    "grounding_output": {
+      "visual_description": "A single golden or amber leaf mid-descent against a soft, blurred background, captured in sharp focus as it tumbles through the air with visible texture and veining.",
+      "scene": "autumn forest, open air, natural daylight",
+      "mood": "serene, ephemeral, contemplative, gentle",
+      "style": "macro photography, shallow depth of field, soft focus background, natural lighting"
+    }
+  },
+  {
+    "input_text": "i bought this cute little lady to decorate my desk",
+    "grounding_output": {
+      "visual_description": "A small decorative figurine of a woman displayed on a clean, organized desk workspace among office supplies and personal items.",
+      "scene": "desk, workspace, office, indoor",
+      "mood": "cheerful, charming, personal, organized",
+      "style": "product photography, bright natural light, close-up detail"
+    }
+  },
+  {
+    "input_text": "grass sunset night sky",
+    "grounding_output": {
+      "visual_description": "A sweeping field of grass silhouetted against a dramatic twilight sky transitioning from deep orange and pink at the horizon to deep indigo and purple overhead, captured in the moments between sunset and night.",
+      "scene": "open field, grassland, horizon, twilight transition",
+      "mood": "serene, contemplative, peaceful, ethereal",
+      "style": "landscape photography, golden hour fading to dusk, natural lighting"
+    }
+  },
+  {
+    "input_text": "the hiking in sahara was exhausting but slow moment opens much more opportunity than riding or driving",
+    "grounding_output": {
+      "visual_description": "A lone hiker walking across vast golden sand dunes under bright sunlight, with footprints trailing behind in the sand, capturing a moment of stillness and contemplation amid the endless desert landscape.",
+      "scene": "Sahara Desert, sand dunes, daytime, expansive landscape, footprints in sand",
+      "mood": "peaceful, meditative, solitary, contemplative, serene, exhausted yet rewarded",
+      "style": "natural light photography, wide-angle landscape, warm golden tones, documentary style"
+    }
+  },
+  {
+    "input_text": "these tracks were from the sled my daughter was sleeping in as we walked across this frozen lake",
+    "grounding_output": {
+      "visual_description": "Parallel sled tracks cutting through pristine white snow on a frozen lake surface, with the imprint of a small child's sled visible in the grooves, under bright daylight",
+      "scene": "frozen lake, snowy landscape, winter wilderness, daylight",
+      "mood": "peaceful, serene, nostalgic, intimate, protective",
+      "style": "documentary photography, natural lighting, overhead/landscape perspective, crisp detail"
+    }
+  },
+  {
+    "input_text": "i went to walk in the haut jura france a rainy and cold afternoon i wanted to see the end of autumn the beginning of winter when nature falls asleep in the middle of the mist to enjoy the long nights ahead",
+    "grounding_output": {
+      "visual_description": "A misty mountain landscape in the Jura region with bare trees and brown vegetation shrouded in thick fog, wet ground reflecting gray skies, and a solitary figure walking along a winding path through the subdued autumn-to-winter transition.",
+      "scene": "mountainous forest, Jura mountains, misty valley, winding hiking trail, late autumn clearing, evergreen trees",
+      "mood": "contemplative, serene, melancholic, peaceful, isolated, introspective, restful",
+      "style": "moody landscape photography, soft focus mist, cool color palette, natural overcast lighting, atmospheric"
+    }
+  },
+  {
+    "input_text": "sunset in ullum",
+    "grounding_output": {
+      "visual_description": "A dramatic sunset painting the sky in golden orange and deep pink hues over what appears to be a coastal or riverside settlement, with the sun descending toward the horizon and casting long shadows across the landscape.",
+      "scene": "coastal settlement, river valley, Ullum region, golden hour, horizon",
+      "mood": "peaceful, serene, contemplative, warm, tranquil",
+      "style": "landscape photography, natural lighting, warm color palette, scenic"
+    }
+  },
+  {
+    "input_text": "i got my first dedicated macro lens today and had to shoot something i plucked these dandelions from the yard and toyed with the lighting a bit to produce this photo i am impressed and very happy with this lens venus optics laowa 60mm f 2 8 2 1 ultra macro",
+    "grounding_output": {
+      "visual_description": "A close-up macro photograph of delicate dandelion seedheads with intricate detail, their wispy filaments illuminated by carefully controlled lighting that creates dimension and makes the fine structures glow, showcasing the optical clarity and shallow depth of field of a professional macro lens.",
+      "scene": "indoor studio setup, macro photography, close-up botanical subject, controlled lighting environment",
+      "mood": "wonder, discovery, technical satisfaction, appreciation, intimate detail",
+      "style": "macro photography, shallow depth of field, studio lighting, high magnification, sharp focus detail, professional optical clarity"
+    }
+  },
+  {
+    "input_text": "durdle door at sunset",
+    "grounding_output": {
+      "visual_description": "A natural stone arch formation rising majestically from golden-sandy beach with turquoise waters below, bathed in warm orange and pink light as the sun dips toward the horizon, creating long shadows and glowing reflections on the wet sand.",
+      "scene": "coastal beach, rocky natural arch, Dorset coastline, golden hour, seashore",
+      "mood": "serene, majestic, contemplative, warm, romantic",
+      "style": "landscape photography, golden hour lighting, warm color grading, scenic coastal vista"
+    }
+  },
+  {
+    "input_text": "steaming puddle",
+    "grounding_output": {
+      "visual_description": "A wet puddle on dark pavement with visible steam or mist rising upward from its surface, catching light as wisps curl into the air above the water.",
+      "scene": "ground level, pavement, indoor or outdoor surface, close-up",
+      "mood": "ethereal, mysterious, quiet, contemplative",
+      "style": "macro photography, soft focus, atmospheric, steam or vapor effects"
+    }
+  },
+  {
+    "input_text": "living coral pantone 2019 featured color",
+    "grounding_output": {
+      "visual_description": "A vibrant, warm coral-orange hue (#FF6B6B to #FF7F50 range) displayed prominently as a solid color field or abstract form with soft, organic edges.",
+      "scene": "color swatch, minimalist studio, close-up detail, flat lay",
+      "mood": "vibrant, energetic, warm, optimistic, contemporary",
+      "style": "modern, minimalist, saturated color photography, editorial, Pantone aesthetic"
+    }
+  },
+  {
+    "input_text": "sea and how i connect with her",
+    "grounding_output": {
+      "visual_description": "A solitary figure standing at the water's edge where waves gently meet the shore, gazing out toward the horizon with a sense of peaceful contemplation and intimate communion with the vast ocean.",
+      "scene": "sandy beach, seashore, ocean waves, horizon line, golden hour, tide meeting sand",
+      "mood": "meditative, serene, introspective, connected, peaceful, reverent",
+      "style": "soft natural light, contemplative photography, atmospheric, serene, intimate"
+    }
+  },
+  {
+    "input_text": "follow us on instagram too shotbycerqueira and incrediblerafa more at",
+    "grounding_output": {
+      "visual_description": "A stylized social media promotional graphic featuring bold typography displaying Instagram handles '@shotbycerqueira' and '@incrediblerafa' with modern design elements, possibly featuring photography samples or creative portfolio previews in the background.",
+      "scene": "digital interface, social media feed, studio setting, graphic design overlay",
+      "mood": "engaging, trendy, promotional, contemporary",
+      "style": "modern graphic design, digital art, social media aesthetic, minimalist typography"
+    }
+  },
+  {
+    "input_text": "90 3 full moon 60 stacked shots from video worth downloading for max rez",
+    "grounding_output": {
+      "visual_description": "A luminous, perfectly round full moon dominating the frame with crisp surface details and texture visible, composed from multiple stacked exposures showing maximum clarity and resolution.",
+      "scene": "night sky, celestial, lunar surface",
+      "mood": "awe-inspiring, serene, magnificent",
+      "style": "high-resolution astronomy photography, sharp focus, detailed, professional astrophotography"
+    }
+  }
+]
