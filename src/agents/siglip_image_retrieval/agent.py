@@ -1,25 +1,40 @@
 import numpy as np
-import json
+import pandas as pd
 import torch
+import time
 from transformers import AutoModel, AutoProcessor
+from pathlib import Path
 
 
 class SiglipImageRetrievalAgent:
 
     def __init__(
         self,
-        embedding_file="data/image_embeddings.npy",
-        metadata_file="data/image_metadata.json",
+        embedding_file="src/data/embeddings/image_embeddings.npy",
+        metadata_file="src/data/processed/dataset_clean.csv",
         top_k=5
     ):
 
         self.top_k = top_k
 
-        # Load embeddings
-        self.image_embeddings = np.load(embedding_file)
+        # Resolve project root dynamically
+        BASE_DIR = Path(__file__).resolve().parents[2]
 
-        with open(metadata_file, "r") as f:
-            self.metadata = json.load(f)
+        embedding_path = BASE_DIR / "data/embeddings/image_embeddings.npy"
+        metadata_path = BASE_DIR / "data/processed/dataset_clean.csv"
+
+        # Load embeddings
+        self.image_embeddings = np.load(embedding_path)
+
+        # Load metadata
+        # self.metadata = pd.read_csv(metadata_path).to_dict("records")
+        self.metadata = pd.read_csv(metadata_path).head(len(self.image_embeddings)).to_dict("records")
+
+        # Safety check
+        if len(self.image_embeddings) != len(self.metadata):
+            raise ValueError(
+                f"Embeddings ({len(self.image_embeddings)}) and metadata ({len(self.metadata)}) must match."
+            )
 
         model_name = "google/siglip-base-patch16-224"
 
@@ -42,11 +57,17 @@ class SiglipImageRetrievalAgent:
         inputs = self.processor(text=[text], return_tensors="pt")
 
         with torch.no_grad():
-            features = self.model.get_text_features(**inputs)
+            outputs = self.model.get_text_features(**inputs)
 
-        features = features / features.norm(dim=-1, keepdim=True)
+        # Extract tensor if needed
+        if hasattr(outputs, "pooler_output"):
+            features = outputs.pooler_output
+        else:
+            features = outputs
 
-        return features.numpy()[0]
+        features = torch.nn.functional.normalize(features, dim=-1)
+
+        return features.cpu().numpy()[0]
 
 
     def retrieve(self, grounding_output):
@@ -56,12 +77,12 @@ class SiglipImageRetrievalAgent:
         text_embedding = self.embed_text(query)
 
         image_embeddings = self.image_embeddings
-        image_embeddings = image_embeddings / np.linalg.norm(
-            image_embeddings,
-            axis=1,
-            keepdims=True
-        )
+        norms = np.linalg.norm(image_embeddings, axis=1, keepdims=True)
 
+        # prevent divide-by-zero
+        norms[norms == 0] = 1
+
+        image_embeddings = image_embeddings / norms
         similarities = image_embeddings @ text_embedding
 
         ranked = np.argsort(similarities)[::-1]
@@ -73,10 +94,45 @@ class SiglipImageRetrievalAgent:
             item = self.metadata[idx]
 
             results.append({
-                "photo_id": item["photo_id"],
-                "image_url": item["photo_image_url"],
+                "photo_id": item.get("photo_id"),
+                "image_url": item.get("photo_image_url"),
                 "caption": item.get("photo_description_clean", ""),
                 "score": float(similarities[idx])
             })
 
         return results
+
+
+if __name__ == "__main__":
+
+    print("\n--- Testing SigLIP Retrieval Agent ---\n")
+
+    # Mock grounding output (simulating Qwen agent)
+    grounding_output = {
+        "visual_description": "A person slumped at a cluttered desk surrounded by empty coffee cups",
+        "scene": "home office, nighttime",
+        "mood": "exhausted, burnt out",
+        "style": "low light, candid"
+    }
+
+    agent = SiglipImageRetrievalAgent()
+
+    start = time.time()
+
+    query = agent.build_query(grounding_output)
+    print("Generated Query:\n", query, "\n")
+
+    results = agent.retrieve(grounding_output)
+
+    end = time.time()
+
+    print("Top Results:\n")
+
+    for i, r in enumerate(results):
+
+        print(f"{i+1}. Photo ID: {r['photo_id']}")
+        print(f"   Score: {r['score']:.4f}")
+        print(f"   Caption: {r['caption']}")
+        print()
+
+    print("Retrieval time:", round(end - start, 3), "seconds")
