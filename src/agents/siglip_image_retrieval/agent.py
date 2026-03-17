@@ -105,15 +105,26 @@ class SiglipImageRetrievalAgent:
 
 if __name__ == "__main__":
 
+    import json
+    from pathlib import Path
+
     print("\n--- Testing SigLIP Retrieval Agent ---\n")
 
-    # Mock grounding output (simulating Qwen agent)
-    grounding_output = {
-        "visual_description": "A person slumped at a cluttered desk surrounded by empty coffee cups",
-        "scene": "home office, nighttime",
-        "mood": "exhausted, burnt out",
-        "style": "low light, candid"
-    }
+    BASE_DIR = Path(__file__).resolve().parents[2]
+
+    # choose which file to use
+    sample_path = BASE_DIR / "data/processed/sample_grounding_outputs.json"
+    # or:
+    # sample_path = BASE_DIR / "data/processed/grounding_outputs.json"
+
+    with open(sample_path) as f:
+        data = json.load(f)
+
+    # handle both formats safely
+    if isinstance(data, list):
+        grounding_output = data[0]["grounding_output"]
+    else:
+        grounding_output = data["grounding_output"]
 
     agent = SiglipImageRetrievalAgent()
 
