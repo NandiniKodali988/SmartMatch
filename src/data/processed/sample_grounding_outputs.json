@@ -1,0 +1,47 @@
+[
+  {
+    "input_text": "feeling burnt out after a long week",
+    "grounding_output": {
+      "visual_description": "A person slumped at a cluttered desk, head resting on their arms, surrounded by empty coffee cups and scattered papers under dim lamp light",
+      "scene": "home office, nighttime, desk",
+      "mood": "exhausted, burnt out, drained",
+      "style": "candid, warm low-light, realistic"
+    }
+  },
+  {
+    "input_text": "celebrating a new job offer",
+    "grounding_output": {
+      "visual_description": "A person jumping with arms raised in a bright open space, holding a phone displaying good news, wide smile, confetti or balloons in the background",
+      "scene": "outdoors or living room, daytime, celebratory",
+      "mood": "elated, triumphant, excited",
+      "style": "vibrant, high energy, candid"
+    }
+  },
+  {
+    "input_text": "that quiet Sunday morning feeling",
+    "grounding_output": {
+      "visual_description": "A person sitting by a window with soft morning light, holding a warm mug, a book or newspaper nearby, plants on the windowsill, everything still and unhurried",
+      "scene": "home, morning, window seat or kitchen table",
+      "mood": "peaceful, unhurried, content",
+      "style": "soft natural light, warm tones, lifestyle"
+    }
+  },
+  {
+    "input_text": "overwhelmed by city life",
+    "grounding_output": {
+      "visual_description": "A lone figure standing still on a crowded sidewalk as blurred pedestrians rush past, tall buildings looming overhead, city noise implied by the visual chaos",
+      "scene": "urban street, daytime, busy intersection",
+      "mood": "overwhelmed, lost, isolated in a crowd",
+      "style": "motion blur, candid street photography, high contrast"
+    }
+  },
+  {
+    "input_text": "finally finished my first marathon",
+    "grounding_output": {
+      "visual_description": "A runner crossing a finish line with arms outstretched, face showing exhaustion and pure joy, a medal being placed around their neck, crowds cheering in the background",
+      "scene": "outdoor race course, finish line, daytime",
+      "mood": "triumphant, relieved, proud",
+      "style": "action shot, natural light, documentary"
+    }
+  }
+]
