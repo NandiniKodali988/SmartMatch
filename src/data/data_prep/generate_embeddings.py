@@ -9,18 +9,24 @@ from tqdm import tqdm
 from pathlib import Path
 
 
-# Get project root
+# ===== CONFIG =====
+BATCH_SIZE = 500
+EMBED_DIM = 768
+
+# ===== PATHS =====
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 dataset_path = BASE_DIR / "data/processed/dataset_clean.csv"
 embedding_path = BASE_DIR / "data/embeddings/image_embeddings.npy"
 
 
-# Load dataset (limit to 200 for testing)
-df = pd.read_csv(dataset_path).sample(200, random_state=42)
+# ===== LOAD DATA =====
+df = pd.read_csv(dataset_path)
+
+total_rows = len(df)
 
 
-# Load SigLIP model
+# ===== LOAD MODEL =====
 model_name = "google/siglip-base-patch16-224"
 model = AutoModel.from_pretrained(model_name)
 processor = AutoProcessor.from_pretrained(model_name)
@@ -28,17 +34,31 @@ processor = AutoProcessor.from_pretrained(model_name)
 model.eval()
 
 
-embeddings = []
+# ===== RESUME LOGIC =====
+if embedding_path.exists():
+    print("Found existing embeddings — resuming...")
 
-print("\nGenerating image embeddings...\n")
+    existing_embeddings = np.load(embedding_path)
+    start_idx = len(existing_embeddings)
+
+    embeddings = existing_embeddings.tolist()
+
+else:
+    print("Starting fresh embeddings...")
+    embeddings = []
+    start_idx = 0
 
 
-for _, row in tqdm(df.iterrows(), total=len(df)):
+print(f"Starting from row: {start_idx}")
 
+
+# ===== MAIN LOOP =====
+for i in tqdm(range(start_idx, total_rows)):
+
+    row = df.iloc[i]
     url = row["photo_image_url"]
 
     try:
-
         response = requests.get(url, timeout=10)
         response.raise_for_status()
 
@@ -49,31 +69,37 @@ for _, row in tqdm(df.iterrows(), total=len(df)):
         with torch.no_grad():
             outputs = model.get_image_features(**inputs)
 
-        # Extract tensor if wrapped in output object
+        # Handle SigLIP output
         if hasattr(outputs, "pooler_output"):
             features = outputs.pooler_output
         else:
             features = outputs
 
-        # Normalize embedding
         features = torch.nn.functional.normalize(features, dim=-1)
 
         embeddings.append(features.cpu().numpy()[0])
 
     except Exception as e:
-
-        print("\nFAILED:", url)
+        print(f"\nFAILED at index {i}: {url}")
         print(e)
 
-        embeddings.append(np.zeros(768))
+        embeddings.append(np.zeros(EMBED_DIM))
 
 
+    # ===== SAVE EVERY BATCH =====
+    if (i + 1) % BATCH_SIZE == 0:
+
+        print(f"\nSaving checkpoint at {i+1} rows...")
+
+        np.save(embedding_path, np.array(embeddings))
+
+        print("Checkpoint saved.")
+
+
+# ===== FINAL SAVE =====
 embeddings = np.array(embeddings)
 
-print("\nEmbedding matrix shape:", embeddings.shape)
-
-
-# Save embeddings
 np.save(embedding_path, embeddings)
 
-print("\nEmbeddings saved to:", embedding_path)
+print("\nFinal embeddings saved.")
+print("Shape:", embeddings.shape)
