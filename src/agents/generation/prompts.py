@@ -1,174 +1,137 @@
-# # src/agents/generation/prompts.py
-# # Prompts used by GenerationAgent for mode selection and prompt refinement.
-
-# # ── Mode selection (Claude decides which editing mode to use) ──────────────
-
-# MODE_SELECTION_SYSTEM = """You are an image editing mode selector.
-
-# Choose the best editing mode for the user's request:
-# - inpaint   : edit a region of ONE image (background swap, object replacement)
-# - restyle   : apply a visual style change to an image
-# - blend     : seamlessly merge TWO OR MORE images into one scene
-# - collage   : arrange multiple images into a grid layout
-# - composite : fuse source images using a style reference as a layout template
-
-# Default prompts per mode (use as a base, then customize to the user's request):
-# - inpaint   : "Replace only the background with [scene]. Preserve the original subject exactly — no changes to identity, pose, or proportions. Match lighting direction, color temperature, and shadows naturally. Add realistic wet surfaces, reflections, and depth. The result must look like a real photograph."
-# - restyle   : "Apply [style] to this image. Maintain the original composition and subject. The result must look like a real photograph."
-# - blend     : "Seamlessly integrate the person from the first image into the background scene of the second image as if photographed together in real life. Match perspective, lighting direction, color temperature, and shadow behavior precisely. Add realistic contact shadows, ambient light interaction, and subtle environmental reflections. Ensure edges are natural and consistent with real optical blending, not cut-and-paste.Preserve photorealism: natural textures, realistic skin tones, believable materials, and real-world lighting. The final image must look like a genuine photograph. Avoid compositing artifacts, halo edges, mismatched lighting, artificial blur, CGI appearance, or over-processed textures."
-# - collage   : Arrange the images into a clean, well-balanced collage layout. Preserve the original appearance of each image with no stylistic alteration. Ensure consistent spacing, alignment, and visual hierarchy. Don't squeeze or expand the photos which will cause an unrealistic outcome. Maintain the natural color and texture of each image. Do not stylize, enhance, or modify content. Avoid any AI-generated look or visual transformation."
-# - composite : Use the reference image only as a composition and layout guide. Match its overall arrangement, framing, scale relationships, and spatial structure, but do not copy its colors, or specific visual content. Populate the composition using the real content from the source images only. Preserve a natural photographic look with strong realism. The final image should look like a genuine high-quality photograph, not AI-generated art. Maintain realistic proportions, natural lighting behavior, accurate material appearance, true-to-life textures, and authentic surface detail. Keep skin, fabric, objects, edges, reflections, shadows, and background details believable and grounded in real photography. Use a documentary or commercial photo realism style. Retain subtle imperfections that occur in real photos, including natural texture variation, minor lighting falloff, realistic depth of field, and non-uniform surfaces.Avoid overly smooth textures, plastic-looking skin or objects, surreal lighting, hyper-saturated colors, painterly effects, CGI-like rendering, fake sharpness, excessive contrast, or artificial beautification. The content of the generated picture must be realistic and can happen in reality. Don't reproduce any text from the source image, and don't include any text except there is a clear input. Do not invent new text, objects, decorations, or background elements not supported by the source images.
-
-
-# Rules:
-# - Number of uploaded images: {num_images}
-# - Style reference provided: {has_style}
-# - If style_ref_path is False, NEVER select composite.
-# - inpaint → single image, background/object editing
-# - blend   → 2+ images, merge into one natural scene
-# - composite → 2+ images + style ref
-
-# Write a concrete, photorealistic editing prompt describing what you would see in the output.
-
-# Respond ONLY with valid JSON:
-# {{
-#   "mode": "<chosen mode>",
-#   "prompt": "<optimized editing prompt>"
-# }}"""
-
-# MODE_SELECTION_USER = """User request: "{user_text}"
-
-# Visual grounding:
-#   description: {visual_description}
-#   scene: {scene}
-#   mood: {mood}
-#   style: {style}"""
-
-
-# # ── Prompt refinement (Claude rewrites a low-scoring prompt) ───────────────
-
-# REFINE_SYSTEM = """You are an image prompt engineer.
-# A previous editing prompt produced a result with low visual similarity.
-# Rewrite it to be more visually concrete and accurate.
-
-# Focus on:
-# - Specific objects, colors, lighting, textures, spatial relationships
-# - Literal descriptions of what you would see
-# - Photorealistic language
-
-# Return ONLY the improved prompt as plain text."""
-
-# REFINE_USER = """Original request: "{user_text}"
-
-# Target grounding:
-#   description: {visual_description}
-#   scene: {scene}
-#   mood: {mood}
-
-# Previous prompt (score {previous_score:.4f}):
-# "{previous_prompt}"
-
-# Write an improved prompt."""
-
 # src/agents/generation/prompts.py
 # Prompts used by GenerationAgent for mode selection and prompt refinement.
 
-# ── Mode selection (Claude decides which editing mode to use) ──────────────
+# ── Mode selection ────────────────────────────────────────────────────────────
+# Claude receives the full grounding output (including intent) and decides:
+#   - WITH uploaded images : choose from inpaint / restyle / blend / collage / composite
+#   - WITHOUT uploaded images : must choose dalle3
 
-MODE_SELECTION_SYSTEM = """You are an image editing mode selector.
+MODE_SELECTION_SYSTEM = """You are an image generation mode selector for a creative AI pipeline.
 
-Choose the best editing mode for the user's request:
-- inpaint   : edit a region of ONE image (background swap, object replacement)
-- restyle   : apply a visual style change to an image
-- blend     : seamlessly merge TWO OR MORE images into one scene
-- collage   : arrange multiple images into a grid layout
-- composite : fuse source images using a style reference as a layout template
+Your job is to decide the best generation mode AND write an optimized prompt,
+based on the user's intent and the full visual grounding output.
 
-Default prompts per mode (use as a base, then customize to the user's request):
-- inpaint   : "Replace only the background with [scene]. Preserve the original subject exactly — no changes to identity, pose, or proportions. Match lighting direction, color temperature, and shadows naturally. Add realistic wet surfaces, reflections, and depth. The result must look like a real photograph."
-- restyle   : "Apply [style] to this image. Maintain the original composition and subject. The result must look like a real photograph."
-- blend     : "Seamlessly integrate the person from the first image into the background scene of the second image as if photographed together in real life. Match perspective, lighting direction, color temperature, and shadow behavior precisely. Add realistic contact shadows, ambient light interaction, and subtle environmental reflections. Ensure edges are natural and consistent with real optical blending, not cut-and-paste.Preserve photorealism: natural textures, realistic skin tones, believable materials, and real-world lighting. The final image must look like a genuine photograph. Avoid compositing artifacts, halo edges, mismatched lighting, artificial blur, CGI appearance, or over-processed textures."
-- collage   : Arrange the images into a clean, well-balanced collage layout. Preserve the original appearance of each image with no stylistic alteration. Ensure consistent spacing, alignment, and visual hierarchy. Don't squeeze or expand the photos which will cause an unrealistic outcome. Maintain the natural color and texture of each image. Do not stylize, enhance, or modify content. Avoid any AI-generated look or visual transformation."
-- composite : Use the reference image only as a composition and layout guide. Match its overall arrangement, framing, scale relationships, and spatial structure, but do not copy its colors, or specific visual content. Populate the composition using the real content from the source images only. Preserve a natural photographic look with strong realism. The final image should look like a genuine high-quality photograph, not AI-generated art. Maintain realistic proportions, natural lighting behavior, accurate material appearance, true-to-life textures, and authentic surface detail. Keep skin, fabric, objects, edges, reflections, shadows, and background details believable and grounded in real photography. Use a documentary or commercial photo realism style. Retain subtle imperfections that occur in real photos, including natural texture variation, minor lighting falloff, realistic depth of field, and non-uniform surfaces.Avoid overly smooth textures, plastic-looking skin or objects, surreal lighting, hyper-saturated colors, painterly effects, CGI-like rendering, fake sharpness, excessive contrast, or artificial beautification. The content of the generated picture must be realistic and can happen in reality. Don't reproduce any text from the source image, and don't include any text except there is a clear input. Do not invent new text, objects, decorations, or background elements not supported by the source images.
+=== Available modes ===
 
+WITH uploaded images (has_uploads=True):
+  - inpaint   : Edit a region of ONE image (replace background, swap object, local edit).
+  - restyle   : Apply a visual style transformation to an image.
+  - blend     : Seamlessly merge TWO OR MORE images into one natural scene.
+  - collage   : Arrange multiple images into a clean grid layout.
+  - composite : Fuse source images using a style reference as a layout/composition template.
+                Only available when style_ref_path=True.
 
-Rules:
-- Number of uploaded images: {num_images}
-- Style reference provided: {has_style}
-- If style_ref_path is False, NEVER select composite.
-- inpaint → single image, background/object editing
-- blend   → 2+ images, merge into one natural scene
-- composite → 2+ images + style ref
+WITHOUT uploaded images (has_uploads=False):
+  - dalle3    : Generate a new image from scratch using DALL·E 3.
+                This is the ONLY option when no images are uploaded.
 
-Write a concrete, photorealistic editing prompt describing what you would see in the output.
+=== Decision rules ===
 
-Respond ONLY with valid JSON:
+1. INTENT is your primary signal:
+   - "social"       → photorealistic output; prefer natural, relatable scenes
+   - "artistic"     → creative interpretation allowed; match the style field
+   - "editorial"    → clean, professional, documentary-style
+   - "commercial"   → polished, high-quality, product/lifestyle feel
+   - "personal"     → intimate, candid, emotional
+
+2. Use style, mood, lighting, and color_palette as secondary signals to shape the prompt.
+
+3. Mode constraints:
+   - has_uploads=False → MUST choose dalle3, no exceptions
+   - composite requires style_ref_path=True AND has_uploads=True AND 2+ images
+   - blend requires has_uploads=True AND 2+ images
+   - inpaint/restyle require has_uploads=True
+
+=== Default prompt bases per mode ===
+- inpaint   : "Replace only the background with [scene]. Preserve the original subject exactly —
+               no changes to identity, pose, or proportions. Match lighting direction,
+               color temperature, and shadows naturally. The result must look like a real photograph."
+- restyle   : "Apply [style] to this image. Maintain the original composition and subject.
+               The result must look like a real photograph."
+- blend     : "Seamlessly integrate the subjects into one scene as if photographed together.
+               Match perspective, lighting, color temperature, and shadows precisely.
+               Photorealistic, no compositing artifacts."
+- collage   : "Arrange the images into a clean, well-balanced grid layout. Preserve original
+               appearance with no stylistic alteration. Consistent spacing and alignment."
+- composite : "Use the reference image only as a composition and layout guide.
+               Populate with content from source images. Photorealistic, documentary style."
+- dalle3    : Write a vivid, concrete visual description of the scene based on grounding output.
+
+=== Context ===
+Number of uploaded images : {num_images}
+Has uploaded images       : {has_uploads}
+Style reference provided  : {has_style}
+
+=== Output format ===
+Respond ONLY with valid JSON, no extra text:
 {{
   "mode": "<chosen mode>",
-  "prompt": "<optimized editing prompt>"
+  "prompt": "<optimized prompt for that mode>"
 }}"""
 
 MODE_SELECTION_USER = """User request: "{user_text}"
 
-Visual grounding:
-  description: {visual_description}
-  scene: {scene}
-  mood: {mood}
-  style: {style}"""
+Full grounding output:
+  intent            : {intent}
+  visual_description: {visual_description}
+  scene             : {scene}
+  mood              : {mood}
+  style             : {style}
+  lighting          : {lighting}
+  color_palette     : {color_palette}
+
+Select the best mode and write an optimized prompt."""
 
 
-# ── Prompt refinement (Claude rewrites a low-scoring prompt) ───────────────
+# ── Prompt refinement ─────────────────────────────────────────────────────────
+# Called when a generated image scores below threshold — Claude rewrites the prompt.
 
 REFINE_SYSTEM = """You are an image prompt engineer.
-A previous editing prompt produced a result with low visual similarity.
-Rewrite it to be more visually concrete and accurate.
+A previous generation prompt produced a result with low visual similarity to the target.
+Rewrite it to be more visually accurate and concrete.
 
 Focus on:
-- Specific objects, colors, lighting, textures, spatial relationships
-- Literal descriptions of what you would see
-- Photorealistic language
+- Specific objects, colors, lighting, textures, spatial layout
+- Literal visual descriptions — what you would actually see in the image
+- Photorealistic language unless the intent explicitly calls for a different style
+- Remove vague or abstract language; replace with concrete visual detail
 
-Return ONLY the improved prompt as plain text."""
+Return ONLY the improved prompt as plain text. No JSON, no explanation."""
 
-REFINE_USER = """Original request: "{user_text}"
+REFINE_USER = """Original user request: "{user_text}"
 
 Target grounding:
-  description: {visual_description}
-  scene: {scene}
-  mood: {mood}
+  intent            : {intent}
+  visual_description: {visual_description}
+  scene             : {scene}
+  mood              : {mood}
+  color_palette     : {color_palette}
 
 Previous prompt (score {previous_score:.4f}):
 "{previous_prompt}"
 
-Write an improved prompt."""
+Write an improved prompt that better matches the visual description."""
 
 
-# ── Style variants for diverse generation ─────────────────────────────────
-# Used in _run_generation() to ensure 3 images look visually distinct.
-# Each variant adds a different visual style / framing / perspective suffix
-# to the base prompt, so DALL·E 3 produces meaningfully different results.
+# ── Style variants for DALL·E 3 diverse generation ────────────────────────────
+# Applied in _run_generation() so each of the N generated images looks distinct.
 
 STYLE_VARIANTS = [
     # Variant 1: cinematic wide shot, realistic photography
     (
         "Shot on a full-frame camera with a 35mm lens. Wide establishing shot. "
-        "Natural ambient lighting from streetlights and storefronts. "
-        "Realistic film grain, shallow depth of field. "
-        "Color palette: cool blues and warm amber highlights. "
+        "Natural ambient lighting. Realistic film grain, shallow depth of field. "
         "Photorealistic, no AI artifacts."
     ),
-    # Variant 2: intimate close perspective, documentary style
+    # Variant 2: intimate documentary style
     (
-        "Documentary photography style. Medium shot from street level. "
-        "Overcast sky, diffused rain light, muted desaturated tones. "
-        "Strong foreground elements: wet cobblestones, puddles reflecting light. "
+        "Documentary photography style. Medium shot from eye level. "
+        "Diffused natural light, muted desaturated tones. "
         "Candid, unposed feel. Shot on a 50mm lens with natural exposure."
     ),
-    # Variant 3: graphic / high-contrast noir
+    # Variant 3: high-contrast expressive
     (
-        "High-contrast black and white film noir style. "
-        "Dramatic shadows, single key light source casting long shadows on pavement. "
-        "Strong silhouette composition. Rain streaks visible in the light cone. "
-        "Inspired by classic street photography: grainy, high-contrast, timeless."
+        "High-contrast photography with dramatic shadows and a single strong key light. "
+        "Bold silhouette composition. Grainy, high-contrast, timeless street photography feel."
     ),
 ]
