@@ -6,7 +6,7 @@
 
 SmartMatch is built as a multi-agent pipeline where each agent is responsible for a distinct stage of the image recommendation process. The system accepts a piece of user-written text as input, along with an optional uploaded image, and returns a ranked set of images each accompanied by a natural-language explanation. All agents are initialized and coordinated through a single pipeline entry point, which passes structured outputs between stages and handles the decision between retrieval and generation.
 
-![Figure 1: SmartMatch Pipeline Flow](images/Pipeline.png){width=50%}
+![Figure 1: SmartMatch Pipeline Flow](images/Pipeline.png)
 
 ---
 
