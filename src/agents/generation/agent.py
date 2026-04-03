@@ -107,7 +107,7 @@ class GenerationAgent:
             )
         else:
             # Path B: no uploads → DALL·E 3 generation
-            return self._run_generation(grounding_output, n, user_text)
+            return self._run_generation(grounding_output, n, user_text, siglip_agent)
 
     # ── Path A: image editing ─────────────────────────────────────────────────
 
@@ -280,11 +280,13 @@ class GenerationAgent:
         grounding_output: dict,
         n: int = 3,
         user_text: str = "",
+        siglip_agent=None,
     ) -> list[dict]:
         """
         Generate n images using DALL·E 3.
         Prompt is built from the full grounding output; each image gets a
         different style variant to ensure visual diversity.
+        Score is computed as text-text cosine similarity via SigLIP encoder.
         """
         base_prompt = self._build_generation_prompt(grounding_output)
         print(f"[Agent 4] Generation path — {n} image(s).")
@@ -297,9 +299,13 @@ class GenerationAgent:
             print(f"[Agent 4] Generating image {i}/{n} (variant {i})...")
             url = self._call_dalle(prompt)
             if url:
-                local_path = self._download_image(url, f"generated_{i}.png")
+                ts         = int(time.time())
+                filename   = f"generated_{ts}_{i}.png"
+                local_path = self._download_image(url, filename)
+                score      = self._score(siglip_agent, grounding_output, base_prompt)
+                print(f"[Agent 4] Score={score:.4f} (text-text proxy)")
                 results.append(
-                    self._pack(f"generated_{i}", url, base_prompt, 0.0, "dalle3", local_path)
+                    self._pack(f"generated_{ts}_{i}", url, base_prompt, score, "dalle3", local_path)
                 )
             if i < n:
                 time.sleep(RATE_LIMIT_SLEEP)

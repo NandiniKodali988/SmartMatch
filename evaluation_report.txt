@@ -1,0 +1,241 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.4, pytest-8.3.4, pluggy-1.5.0 -- /Library/Frameworks/Python.framework/Versions/3.11/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/qing0304/Desktop/GU/DSAN6725/spring-2026-final-project-team_04
+configfile: pytest.ini
+plugins: typeguard-4.4.1, timeout-2.4.0, anyio-4.6.2.post1
+collecting ... collected 25 items
+
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[feeling burnt out after a long week] [FieldTextRetrieval] Loading dataset...
+[FieldTextRetrieval] 25000 records loaded.
+[FieldTextRetrieval] Loading image URL lookup from CSV...
+[FieldTextRetrieval] URL lookup ready — 25000 entries.
+[FieldTextRetrieval] Loading field embeddings...
+[FieldTextRetrieval] Embeddings loaded — shape per field: (25000, 3072)
+
+[Eval] Running full pipeline for: 'feeling burnt out after a long week'
+Grounding visual concepts for: 'feeling burnt out after a long week'
+Visual grounding successful.
+[Eval]   → generation (score=0.3704 < 0.5)
+[Agent 4] Generation path — 1 image(s).
+[Agent 4] Base prompt: A weary person slumped at a desk surrounded by scattered papers and empty coffee cups, their head resting on their hand ...
+[Agent 4] Generating image 1/1 (variant 1)...
+[Agent 4] Saved → outputs/generated/generated_1775199829_1.png
+[Agent 4] Score=0.3358 (text-text proxy)
+[Agent 4] Generated 1 image(s).
+Generating justifications for 1 image(s)...
+  [1/1] Justifying image generated_1775199829_1...
+Done generating justifications.
+
+[Eval] Running full pipeline for: 'walking alone through a rainy city street at night'
+Grounding visual concepts for: 'walking alone through a rainy city street at night'
+Visual grounding successful.
+[Eval]   → retrieval  (score=0.5116 >= 0.5)
+Generating justifications for 3 image(s)...
+  [1/3] Justifying image YQPTf86GvpM...
+  [2/3] Justifying image 1vYkQVDWXl0...
+  [3/3] Justifying image nRVn-_k1uMI...
+Done generating justifications.
+
+[Eval] Running full pipeline for: 'a quiet Sunday morning with coffee and sunlight'
+Grounding visual concepts for: 'a quiet Sunday morning with coffee and sunlight'
+Visual grounding successful.
+[Eval]   → retrieval  (score=0.5653 >= 0.5)
+Generating justifications for 3 image(s)...
+  [1/3] Justifying image BeDY9KuP0sI...
+  [2/3] Justifying image aWf0vy3iJfk...
+  [3/3] Justifying image vYmCV4XGXvo...
+Done generating justifications.
+
+[Eval] Running full pipeline for: 'celebrating a new job offer with friends'
+Grounding visual concepts for: 'celebrating a new job offer with friends'
+Visual grounding successful.
+[Eval]   → generation (score=0.4661 < 0.5)
+[Agent 4] Generation path — 1 image(s).
+[Agent 4] Base prompt: A group of friends toasting together with glasses raised high, smiling and laughing in a warm, celebratory moment, with ...
+[Agent 4] Generating image 1/1 (variant 1)...
+[Agent 4] Saved → outputs/generated/generated_1775199873_1.png
+[Agent 4] Score=0.3094 (text-text proxy)
+[Agent 4] Generated 1 image(s).
+Generating justifications for 1 image(s)...
+  [1/1] Justifying image generated_1775199873_1...
+Done generating justifications.
+
+[Eval] Running full pipeline for: 'the calm before a thunderstorm'
+Grounding visual concepts for: 'the calm before a thunderstorm'
+Visual grounding successful.
+[Eval]   → retrieval  (score=0.5101 >= 0.5)
+Generating justifications for 3 image(s)...
+  [1/3] Justifying image zP0kPMSuAI4...
+  [2/3] Justifying image CitnR95_VWo...
+  [3/3] Justifying image 9zCe4gIrLhU...
+Done generating justifications.
+
+[Eval] Running full pipeline for: 'nostalgia for childhood summers'
+Grounding visual concepts for: 'nostalgia for childhood summers'
+Visual grounding successful.
+[Eval]   → generation (score=0.4808 < 0.5)
+[Agent 4] Generation path — 1 image(s).
+[Agent 4] Base prompt: A sunlit porch or backyard with weathered wooden structures, ice cream melting in a cone, a bicycle leaning against a fe...
+[Agent 4] Generating image 1/1 (variant 1)...
+[Agent 4] Saved → outputs/generated/generated_1775199908_1.png
+[Agent 4] Score=0.9313 (text-text proxy)
+[Agent 4] Generated 1 image(s).
+Generating justifications for 1 image(s)...
+  [1/1] Justifying image generated_1775199908_1...
+Done generating justifications.
+
+[Eval] Running full pipeline for: 'overwhelmed by city life'
+Grounding visual concepts for: 'overwhelmed by city life'
+Visual grounding successful.
+[Eval]   → generation (score=0.3899 < 0.5)
+[Agent 4] Generation path — 1 image(s).
+[Agent 4] Base prompt: A solitary figure standing amidst towering buildings and busy crowds, surrounded by blurred movement and chaos, with an ...
+[Agent 4] Generating image 1/1 (variant 1)...
+[Agent 4] Saved → outputs/generated/generated_1775199928_1.png
+[Agent 4] Score=0.3178 (text-text proxy)
+[Agent 4] Generated 1 image(s).
+Generating justifications for 1 image(s)...
+  [1/1] Justifying image generated_1775199928_1...
+Done generating justifications.
+
+[Eval] Running full pipeline for: 'a peaceful mountain hike at golden hour'
+Grounding visual concepts for: 'a peaceful mountain hike at golden hour'
+Visual grounding successful.
+[Eval]   → retrieval  (score=0.5570 >= 0.5)
+Generating justifications for 3 image(s)...
+  [1/3] Justifying image dI7vfR1Bqcg...
+  [2/3] Justifying image legqE_QBFmI...
+  [3/3] Justifying image 30HOhcDG2Xk...
+Done generating justifications.
+PASSED
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[walking alone through a rainy city street at night] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[a quiet Sunday morning with coffee and sunlight] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[celebrating a new job offer with friends] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[the calm before a thunderstorm] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[nostalgia for childhood summers] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[overwhelmed by city life] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[a peaceful mountain hike at golden hour] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_scores_in_valid_range[feeling burnt out after a long week] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_scores_in_valid_range[walking alone through a rainy city street at night] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_scores_in_valid_range[a quiet Sunday morning with coffee and sunlight] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_scores_in_valid_range[celebrating a new job offer with friends] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_scores_in_valid_range[the calm before a thunderstorm] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_scores_in_valid_range[nostalgia for childhood summers] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_scores_in_valid_range[overwhelmed by city life] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_scores_in_valid_range[a peaceful mountain hike at golden hour] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_decision_is_valid[feeling burnt out after a long week] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_decision_is_valid[walking alone through a rainy city street at night] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_decision_is_valid[a quiet Sunday morning with coffee and sunlight] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_decision_is_valid[celebrating a new job offer with friends] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_decision_is_valid[the calm before a thunderstorm] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_decision_is_valid[nostalgia for childhood summers] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_decision_is_valid[overwhelmed by city life] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_decision_is_valid[a peaceful mountain hike at golden hour] PASSED
+src/smoke_test.py::TestEvaluation::test_eval_print_full_report 
+
+════════════════════════════════════════════════════════════════════════
+  SMARTMATCH — PRELIMINARY EVALUATION RESULTS
+  Queries: 8  |  Threshold: 0.5
+════════════════════════════════════════════════════════════════════════
+
+Query                                          Hybrid  SigLIP    Text  Decision
+────────────────────────────────────────────────────────────────────────
+  feeling burnt out after a long week          0.3704 -0.0344  0.5439  ↳ gen
+  walking alone through a rainy city street a  0.5116 -0.0406  0.7483  ✓
+  a quiet Sunday morning with coffee and sunl  0.5653  0.0228  0.7978  ✓
+  celebrating a new job offer with friends     0.4661 -0.0270  0.6775  ↳ gen
+  the calm before a thunderstorm               0.5101  0.0282  0.7166  ✓
+  nostalgia for childhood summers              0.4808  0.0289  0.6745  ↳ gen
+  overwhelmed by city life                     0.3899  0.0059  0.5545  ↳ gen
+  a peaceful mountain hike at golden hour      0.5570 -0.0223  0.8053  ✓
+────────────────────────────────────────────────────────────────────────
+  Average                                      0.4814 -0.0048  0.6898
+
+  Routing:  retrieval=4  generation=4  (threshold=0.5)
+
+  Full pipeline results per query:
+────────────────────────────────────────────────────────────────────────
+
+  [feeling burnt out after a long week]  → generation
+    1. generated_1775199829_1  score=0.3358  source=dalle3
+       prompt : A weary person slumped at a desk surrounded by scattered papers and em
+       saved  : outputs/generated/generated_1775199829_1.png
+       justification: This image perfectly captures the physical and mental state of burnout—the slump
+
+  [walking alone through a rainy city street at night]  → retrieval
+    1. YQPTf86GvpM           hybrid=0.5116  siglip=-0.0406  text=0.7483
+       caption: A lone figure holds an umbrella on a wet city street at night, with ne
+       justification: This image perfectly captures the exact scene the user described—a solitary pers
+    2. 1vYkQVDWXl0           hybrid=0.5085  siglip=-0.0258  text=0.7375
+       caption: A solitary figure holds a red umbrella while walking on a rain-wet str
+       justification: This image is a perfect match because it captures all the key elements of your d
+    3. nRVn-_k1uMI           hybrid=0.5081  siglip=-0.0178  text=0.7335
+       caption: A solitary figure stands in a dimly lit urban alleyway at night, surro
+       justification: This image captures the exact mood you described—a lone person moving through an
+
+  [a quiet Sunday morning with coffee and sunlight]  → retrieval
+    1. BeDY9KuP0sI           hybrid=0.5653  siglip=0.0228  text=0.7978
+       caption: A steaming coffee mug with saucer sits on a surface in soft focus, ren
+       justification: This image perfectly captures the essence of your text by showing the two key el
+    2. aWf0vy3iJfk           hybrid=0.5090  siglip=-0.0188  text=0.7353
+       caption: A wooden pier extends into calm ocean waters under soft morning sunlig
+       justification: This image captures the exact peaceful mood of a quiet Sunday morning—the soft m
+    3. vYmCV4XGXvo           hybrid=0.5071  siglip=-0.0020  text=0.7253
+       caption: A ceramic coffee cup with fresh yellow daffodils and white petals arra
+       justification: This image perfectly captures the serene mood you're describing with its combina
+
+  [celebrating a new job offer with friends]  → generation
+    1. generated_1775199873_1  score=0.3094  source=dalle3
+       prompt : A group of friends toasting together with glasses raised high, smiling
+       saved  : outputs/generated/generated_1775199873_1.png
+       justification: This image perfectly captures the essence of celebrating a job offer with friend
+
+  [the calm before a thunderstorm]  → retrieval
+    1. zP0kPMSuAI4           hybrid=0.5101  siglip=0.0282  text=0.7166
+       caption: A dramatic dark stormy sky with heavy clouds looms over a landscape, c
+       justification: This image captures the essence of "the calm before a thunderstorm" through its 
+    2. CitnR95_VWo           hybrid=0.5088  siglip=0.0714  text=0.6962
+       caption: Dark cumulus clouds gather dramatically over turbulent seas beneath a 
+       justification: This image perfectly captures the essence of "the calm before a thunderstorm" by
+    3. 9zCe4gIrLhU           hybrid=0.5063  siglip=0.0777  text=0.6899
+       caption: A monochromatic landscape beneath dramatic storm clouds with a solitar
+       justification: This image perfectly captures the tension in "the calm before a thunderstorm" by
+
+  [nostalgia for childhood summers]  → generation
+    1. generated_1775199908_1  score=0.9313  source=dalle3
+       prompt : A sunlit porch or backyard with weathered wooden structures, ice cream
+       saved  : outputs/generated/generated_1775199908_1.png
+       justification: This image perfectly captures the essence of childhood summer nostalgia through 
+
+  [overwhelmed by city life]  → generation
+    1. generated_1775199928_1  score=0.3178  source=dalle3
+       prompt : A solitary figure standing amidst towering buildings and busy crowds, 
+       saved  : outputs/generated/generated_1775199928_1.png
+       justification: This image perfectly captures the essence of urban overwhelm through its visual 
+
+  [a peaceful mountain hike at golden hour]  → retrieval
+    1. dI7vfR1Bqcg           hybrid=0.5570  siglip=-0.0223  text=0.8053
+       caption: A majestic mountain range bathed in warm sunlight during sunrise, with
+       justification: This image perfectly captures the essence of a peaceful mountain hike at golden 
+    2. legqE_QBFmI           hybrid=0.5540  siglip=-0.0460  text=0.8112
+       caption: A solitary person stands on a rocky shoreline gazing toward the ocean 
+       justification: While this image captures the serene, contemplative mood of golden hour with its
+    3. 30HOhcDG2Xk           hybrid=0.5524  siglip=-0.0520  text=0.8114
+       caption: A solitary person stands silhouetted on a hilltop against a dramatic r
+       justification: This image perfectly captures the essence of a peaceful mountain hike at golden 
+
+════════════════════════════════════════════════════════════════════════
+
+PASSED
+
+=============================== warnings summary ===============================
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[feeling burnt out after a long week]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+src/smoke_test.py::TestEvaluation::test_eval_query_returns_results[feeling burnt out after a long week]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 25 passed, 2 warnings in 135.17s (0:02:15) ==================
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

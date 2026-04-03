@@ -38,8 +38,8 @@ FIELD_WEIGHTS = {
     "color_palette":      1/3,
 }
  
-SIGLIP_WEIGHT = float(os.getenv("SIGLIP_WEIGHT", "0.4"))
-TEXT_WEIGHT   = float(os.getenv("TEXT_WEIGHT",   "0.6"))
+SIGLIP_WEIGHT = float(os.getenv("SIGLIP_WEIGHT", "0.3"))
+TEXT_WEIGHT   = float(os.getenv("TEXT_WEIGHT",   "0.7"))
  
  
 class FieldTextRetrievalAgent:
