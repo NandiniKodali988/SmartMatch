@@ -6,12 +6,12 @@ from dotenv import load_dotenv
 try:
     from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when run directly
 except ImportError:
-    from agents.qwen_visual_grounding.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when imported by pipeline
+    from src.agents.qwen_visual_grounding.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when imported by pipeline
 
 load_dotenv()
 
 MODEL = os.getenv("GROUNDING_MODEL", "claude-haiku-4-5-20251001")
-REQUIRED_KEYS = {"visual_description", "scene", "mood", "style"}
+REQUIRED_KEYS = {"visual_description", "scene", "mood", "style", "lighting", "color_palette", "intent"}
 
 
 class QwenVisualGroundingAgent:

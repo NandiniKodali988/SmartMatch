@@ -1,0 +1,202 @@
+[
+  {
+    "query": "A frost-covered landscape with icy grasses and reeds along a dark water's edge, reflecting winter sunlight through misty forest atmosphere.  serene, cold, mystical, peaceful ",
+    "grounding_output": {
+      "visual_description": "A frost-covered landscape with icy grasses and reeds along a dark water's edge, reflecting winter sunlight through misty forest atmosphere.",
+      "mood": "serene, cold, mystical, peaceful",
+      "color_palette": "deep teal, soft white, warm brown, silver, black"
+    },
+    "results": [
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.04002238027301532
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.03234385460012965
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.03197897175761567
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.03032516634355872
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.030089930079545742
+      }
+    ]
+  },
+  {
+    "query": "Close-up of ripe blueberries clustered on green leafy branches with soft selective focus, showcasing fresh purple-blue berries among natural foliage.  fresh, natural, organic, peaceful ",
+    "grounding_output": {
+      "visual_description": "Close-up of ripe blueberries clustered on green leafy branches with soft selective focus, showcasing fresh purple-blue berries among natural foliage.",
+      "mood": "fresh, natural, organic, peaceful",
+      "color_palette": "deep olive green, soft gray, purple-blue, warm olive"
+    },
+    "results": [
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.031627580498394474
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.019090860200444103
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.0171698961704078
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.01713341099822096
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.016408908194219217
+      }
+    ]
+  },
+  {
+    "query": "A serene coastal scene with calm waters meeting sandy shore under a soft overcast sky, rendered in cool gray and silver tones.  peaceful, tranquil, serene, calm ",
+    "grounding_output": {
+      "visual_description": "A serene coastal scene with calm waters meeting sandy shore under a soft overcast sky, rendered in cool gray and silver tones.",
+      "mood": "peaceful, tranquil, serene, calm",
+      "color_palette": "deep teal, light gray, silver"
+    },
+    "results": [
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.04658251660669657
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.04580499572445765
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.038167694181379934
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.030911460296579686
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.02923459833415409
+      }
+    ]
+  },
+  {
+    "query": "Dense green fir trees cover rolling mountain slopes beneath white clouds in bright daylight, creating a serene wilderness landscape.  serene, peaceful, majestic, natural ",
+    "grounding_output": {
+      "visual_description": "Dense green fir trees cover rolling mountain slopes beneath white clouds in bright daylight, creating a serene wilderness landscape.",
+      "mood": "serene, peaceful, majestic, natural",
+      "color_palette": "deep green, soft blue, light gray, deep teal, charcoal"
+    },
+    "results": [
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.039345325549302826
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.03245869814510217
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.031410713498224795
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.031072304715433947
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.029971908772587298
+      }
+    ]
+  },
+  {
+    "query": "Massive icebergs float on turbulent arctic waters beneath overcast skies, with jagged ice formations and snow-covered peaks visible in the cold, windswept landscape.  dramatic, cold, isolated, majestic, austere ",
+    "grounding_output": {
+      "visual_description": "Massive icebergs float on turbulent arctic waters beneath overcast skies, with jagged ice formations and snow-covered peaks visible in the cold, windswept landscape.",
+      "mood": "dramatic, cold, isolated, majestic, austere",
+      "color_palette": "deep teal, steel blue, gray, white"
+    },
+    "results": [
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.06003257750086492
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.04943708800094665
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.04837187994005944
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.04721269135881096
+      },
+      {
+        "photo_id": null,
+        "image_url": null,
+        "caption": "",
+        "score": 0.046654858309864995
+      }
+    ]
+  }
+]

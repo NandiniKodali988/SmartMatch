@@ -173,3 +173,10 @@ cython_debug/
 # Large data files
 *.csv
 /data/
+
+.DS_Store
+embeddings/
+batch_state.json
+dataset_clean.checkpoint.json
+.claude/
+image_embeddings.npy

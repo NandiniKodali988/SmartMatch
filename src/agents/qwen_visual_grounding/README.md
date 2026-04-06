@@ -1,4 +1,4 @@
-# Qwen2.5-VL Visual Concept Grounding Agent
+# Visual Concept Grounding Agent (powered by Claude)
 
 Transforms abstract user text into structured visual descriptions for downstream SigLIP-2 embedding and image retrieval. Also generates natural-language justifications for recommended images.
 
@@ -9,7 +9,7 @@ Install dependencies and configure your environment from the project root:
 ```bash
 pip install -r requirements.txt
 cp .env.example .env
-# Add your HuggingFace token to .env
+# Add your Anthropic API key to .env
 ```
 
 ## Usage

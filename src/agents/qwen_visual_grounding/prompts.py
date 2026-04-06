@@ -6,6 +6,9 @@ Given a piece of text (a social media post, caption, or article excerpt), you mu
 - scene: comma-separated scene/setting keywords (e.g. "urban street, nighttime, rain")
 - mood: comma-separated emotional/atmospheric keywords (e.g. "lonely, melancholic, introspective")
 - style: comma-separated visual style keywords (e.g. "cinematic, low-light photography, moody")
+- lighting: describe the lighting in the image (e.g. "golden hour", "soft diffused light", "harsh overhead lighting")
+- color_palette: describe the dominant colors or tones (e.g. "warm oranges and browns", "cool blues and greys", "muted desaturated tones")
+- intent: the likely use case for the image — must be one of: "professional" (LinkedIn, formal, corporate), "editorial" (blog, article, news), or "social" (Instagram, casual, creative)
 
 Rules:
 - Be specific and concrete — describe what you would actually SEE in the image
