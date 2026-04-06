@@ -194,7 +194,7 @@ class SiglipImageRetrievalAgent:
 
         # Load metadata
         self.metadata = (
-            pd.read_csv(metadata_path)
+            pd.read_csv(metadata_path, on_bad_lines="skip")
             .head(len(self.image_embeddings))
             .to_dict("records")
         )
@@ -274,34 +274,58 @@ if __name__ == "__main__":
 
     import json
     from pathlib import Path
+    import time
 
-    print("\n--- Testing SigLIP Retrieval Agent ---\n")
+    print("\n--- Testing SigLIP Retrieval Agent (Saving Output) ---\n")
 
     BASE_DIR = Path(__file__).resolve().parents[2]
-    sample_path = BASE_DIR / "data/processed/sample_grounding_outputs.json"
 
-    with open(sample_path) as f:
+    grounding_path = BASE_DIR / "data/processed/description_grounding_outputs.json"
+    output_path = BASE_DIR / "outputs/siglip_results.json"
+
+    # make sure outputs folder exists
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(grounding_path) as f:
         data = json.load(f)
-
-    if isinstance(data, list):
-        grounding_output = data[0]["grounding_output"]
-    else:
-        grounding_output = data["grounding_output"]
 
     agent = SiglipImageRetrievalAgent()
 
-    start = time.time()
-    query = agent.build_query(grounding_output)
-    print("Generated Query:\n", query, "\n")
+    all_results = []
 
-    results = agent.retrieve(grounding_output)
+    start = time.time()
+
+    for i, item in enumerate(data[:5]):
+
+        print(f"\n--- Example {i+1} ---\n")
+
+        # handle both formats
+        if isinstance(item, dict) and "grounding_output" in item:
+            grounding_output = item["grounding_output"]
+        else:
+            grounding_output = item
+
+        query = agent.build_query(grounding_output)
+
+        results = agent.retrieve(grounding_output)
+
+        # store everything
+        all_results.append({
+            "query": query,
+            "grounding_output": grounding_output,
+            "results": results
+        })
+
+        # still print for debugging
+        print("Query:", query)
+        for r in results:
+            print(r)
+
     end = time.time()
 
-    print("Top Results:\n")
-    for i, r in enumerate(results):
-        print(f"{i+1}. Photo ID: {r['photo_id']}")
-        print(f"   Score: {r['score']:.4f}")
-        print(f"   Caption: {r['caption']}")
-        print()
+    # save to file
+    with open(output_path, "w") as f:
+        json.dump(all_results, f, indent=2)
 
-    print("Retrieval time:", round(end - start, 3), "seconds")
+    print(f"\nSaved results to: {output_path}")
+    print("Total runtime:", round(end - start, 3), "seconds")

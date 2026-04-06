@@ -56,10 +56,7 @@ for _, row in tqdm(df.iterrows(), total=len(df)):
             features = outputs
 
         # Normalize embedding
-        features = torch.nn.functional.normalize(features, dim=-1)
-
         embeddings.append(features.cpu().numpy()[0])
-
     except Exception as e:
 
         print("\nFAILED:", url)

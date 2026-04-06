@@ -10,12 +10,17 @@ Full pipeline:
       → Justification (Claude)
       → Return top results
 """
-
-from agents.qwen_visual_grounding.agent import QwenVisualGroundingAgent
-from agents.qwen_visual_grounding.justification_agent import QwenJustificationAgent
-from agents.siglip_image_retrieval.agent import SiglipImageRetrievalAgent
-from agents.content_router.agent import ContentRouterAgent
-from agents.fallback_generation.agent import FallbackGenerationAgent
+from src.agents.qwen_visual_grounding.agent import QwenVisualGroundingAgent
+from src.agents.qwen_visual_grounding.justification_agent import QwenJustificationAgent
+from src.agents.siglip_image_retrieval.agent import SiglipImageRetrievalAgent
+from src.agents.content_router.agent import ContentRouterAgent
+from src.agents.generation.agent import GenerationAgent
+# from src.agents.fallback_generation.agent import FallbackGenerationAgent
+# from agents.qwen_visual_grounding.agent import QwenVisualGroundingAgent
+# from agents.qwen_visual_grounding.justification_agent import QwenJustificationAgent
+# from agents.siglip_image_retrieval.agent import SiglipImageRetrievalAgent
+# from agents.content_router.agent import ContentRouterAgent
+# from agents.fallback_generation.agent import FallbackGenerationAgent
 
 
 def run_pipeline(user_text: str) -> list:
