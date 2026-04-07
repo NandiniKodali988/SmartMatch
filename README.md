@@ -41,6 +41,54 @@ User Text
 
 ---
 
+## Setup & Demo
+
+### Prerequisites
+
+- Python 3.10+
+- API keys for Anthropic and OpenAI
+
+### Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+### Environment
+
+Copy `.env.example` to `.env` and fill in your API keys:
+
+```bash
+cp .env.example .env
+```
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+HF_TOKEN=hf_...
+```
+
+### Data
+
+Place the following files (not tracked in git due to size):
+
+| File | Path |
+|------|------|
+| Image embeddings (SigLIP) | `src/data/embeddings/image_embeddings.npy` |
+| Field embeddings (text) | `src/data/embeddings/field_embeddings.npz` |
+| Dataset | `src/data/processed/dataset_clean.csv` |
+| Grounding outputs | `src/data/processed/description_grounding_outputs.json` |
+
+### Run the Demo
+
+```bash
+streamlit run src/app.py
+```
+
+Open [http://localhost:8501](http://localhost:8501), type a description (e.g. *"morning coffee with documents scattered around"*), and click **Find Images**.
+
+---
+
 ## Key Contributions
 
 - **Visual Concept Grounding**: A novel preprocessing step using Claude to convert abstract user text into SigLip-2-compatible visual descriptions, directly addressing SigLip-2's weakness on non-literal language.
