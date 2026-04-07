@@ -194,7 +194,7 @@ class SiglipImageRetrievalAgent:
 
         # Load metadata
         self.metadata = (
-            pd.read_csv(metadata_path, on_bad_lines="skip")
+            pd.read_csv(metadata_path, on_bad_lines="skip", engine="python")
             .head(len(self.image_embeddings))
             .to_dict("records")
         )

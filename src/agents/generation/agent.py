@@ -38,7 +38,7 @@ try:
         STYLE_VARIANTS,
     )
 except ImportError:
-    from src.agents.generation.prompts import (
+    from agents.generation.prompts import (
         MODE_SELECTION_SYSTEM,
         MODE_SELECTION_USER,
         REFINE_SYSTEM,

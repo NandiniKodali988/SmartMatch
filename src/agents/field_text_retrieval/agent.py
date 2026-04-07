@@ -70,7 +70,7 @@ class FieldTextRetrievalAgent:
  
         # Build photo_id → photo_image_url lookup from dataset_clean.csv
         print("[FieldTextRetrieval] Loading image URL lookup from CSV...")
-        meta_df = pd.read_csv(METADATA_CSV, usecols=["photo_id", "photo_image_url"])
+        meta_df = pd.read_csv(METADATA_CSV, usecols=["photo_id", "photo_image_url"], on_bad_lines="skip")
         self.url_lookup = dict(zip(
             meta_df["photo_id"].astype(str),
             meta_df["photo_image_url"].astype(str),
