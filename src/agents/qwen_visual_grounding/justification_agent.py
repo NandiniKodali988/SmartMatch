@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 try:
     from prompts import JUSTIFICATION_SYSTEM_PROMPT, JUSTIFICATION_USER_TEMPLATE  # when run directly
 except ImportError:
-    from src.agents.qwen_visual_grounding.prompts import JUSTIFICATION_SYSTEM_PROMPT, JUSTIFICATION_USER_TEMPLATE  # when imported by pipeline
+    from agents.qwen_visual_grounding.prompts import JUSTIFICATION_SYSTEM_PROMPT, JUSTIFICATION_USER_TEMPLATE  # when imported by pipeline
 
 load_dotenv()
 
