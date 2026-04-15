@@ -137,6 +137,81 @@ Use Claude to automatically evaluate pipeline outputs at scale. Run 50 queries, 
 
 This also lets us run ablation studies, comparing results with and without the multimodal verification step, and with and without graph RAG, to show that each addition actually moves the needle.
 
+## Engineering Upgrades
+
+These three additions came out of comparing our project against other teams. They don't add new features but they raise the engineering quality to a level that matches or exceeds what the other projects are doing. They are also relatively quick to build because we are mostly wrapping existing code.
+
+### Typed State with Pydantic
+
+Right now agents pass plain Python dicts between each other. This works but it is fragile - if a field name changes or a new field gets added, nothing catches the mismatch until something breaks at runtime.
+
+The fix is a set of Pydantic models in `src/pipeline/state.py`:
+
+- `GroundingOutput` - the seven fields from the grounding agent (visual_description, scene, mood, style, lighting, color_palette, intent), all typed
+- `ImageResult` - a single image result with typed fields for score, source, siglip_score, text_score, justification, and provenance
+- `PipelineState` - the full state object that flows through the orchestrator, tracking grounding output, candidates, routing decision, and final images
+- `MoodBoardBundle` - the named output artifact (see below)
+
+Every agent should accept and return these models instead of raw dicts. This is a one-time refactor and it makes the architecture diagram in the paper much cleaner to explain.
+
+**File to create:** `src/pipeline/state.py`
+
+### Orchestrator Agent
+
+Right now the pipeline is a script (`run_pipeline.py`) that calls agents in sequence. It works but it does not look like an agent architecture from the outside - it looks like a function.
+
+The fix is a proper `OrchestratorAgent` in `src/agents/orchestrator/agent.py` that:
+
+- Takes a query and optional session state as input
+- Calls each agent step explicitly with logged routing decisions
+- Makes the retrieval vs generation decision as a named step with clear logic
+- Returns a `MoodBoardBundle`
+
+This does not change how the pipeline works. It wraps what already exists behind a clean interface. The reason this matters is that the paper's architecture section can now describe a real orchestrator agent, not just a script.
+
+**File to create:** `src/agents/orchestrator/agent.py`
+
+### MoodBoardBundle Output Format
+
+Right now the pipeline returns a plain list of dicts. There is no named artifact, no metadata, no way to know from the output alone what query produced it or how routing was decided.
+
+The `MoodBoardBundle` fixes this. It is a Pydantic model that contains:
+
+- The original query
+- The full grounding output
+- The list of images (as `ImageResult` models)
+- The routing decision (retrieval or generation)
+- The top hybrid score that drove the routing decision
+- The board-level summary from the justification agent
+- A timestamp
+
+This makes evaluation much easier - you can save a bundle to JSON and have everything you need to analyze the result later. It also makes the demo more impressive because the output is a structured artifact, not just a list.
+
+**Defined in:** `src/pipeline/state.py`, used everywhere the pipeline returns results
+
+---
+
+## Ablation Study
+
+The evaluation section currently has baselines like random selection and text-only search. These are fine but they do not prove that our specific contributions (grounding agent, hybrid retrieval) actually move the needle. An ablation study does this directly.
+
+We run the same set of queries through three conditions and compare top retrieval scores:
+
+**Condition A - Full pipeline (current system)**
+Grounding agent runs first, converts the query into structured visual fields. Then hybrid retrieval runs (SigLIP 30% + field text 70%). This is what the system does today.
+
+**Condition B - No grounding**
+Skip the grounding agent entirely. Pass the raw user query directly into retrieval as if it were the visual_description field. Everything else is identical. This isolates the value of the grounding agent.
+
+**Condition C - SigLIP only**
+Grounding agent runs but only SigLIP retrieval is used, no field text component. This isolates the value of the hybrid approach over single-modality retrieval.
+
+The expected finding is A > B (grounding helps) and A > C (hybrid beats single-modality). If the data shows this, we have concrete quantitative evidence for two of our core contributions. If it doesn't, that is also an interesting finding worth writing about.
+
+**File to create:** `src/evaluation/ablation.py`
+
+---
+
 ## What Is Already Done and Staying
 
-Everything in the core pipeline is solid and stays as is. The grounding agent, hybrid retrieval, DALL-E 3 fallback, justification agent, and the base Streamlit app are all staying. The new work is the verification agent, coherence agent, memory manager, multi-turn app layer, graph RAG, MCP server, observability, and guardrails. The underlying architecture does not change. We are building on top of what is already there.
+Everything in the core pipeline is solid and stays as is. The grounding agent, hybrid retrieval, DALL-E 3 fallback, justification agent, and the base Streamlit app are all staying. The new work is the verification agent, coherence agent, memory manager, multi-turn app layer, graph RAG, MCP server, observability, guardrails, typed state, orchestrator, and ablation study. The underlying architecture does not change. We are building on top of what is already there.
