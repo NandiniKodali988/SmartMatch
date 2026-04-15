@@ -139,7 +139,7 @@ This also lets us run ablation studies, comparing results with and without the m
 
 ## Engineering Upgrades
 
-These three additions came out of comparing our project against other teams. They don't add new features but they raise the engineering quality to a level that matches or exceeds what the other projects are doing. They are also relatively quick to build because we are mostly wrapping existing code.
+These three additions strengthen the engineering quality of the project without adding new features. They are also relatively quick to build because we are mostly wrapping existing code.
 
 ### Typed State with Pydantic
 
