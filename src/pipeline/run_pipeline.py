@@ -12,17 +12,22 @@ Full pipeline:
     │
     └─ No uploaded images
          → Visual Grounding
-         → Hybrid Retrieval: SigLIP (0.7) + FieldText (0.3) over full 25k dataset
+         → Hybrid Retrieval: SigLIP + FieldText over full 25k dataset (CANDIDATE_K results)
          → top-1 hybrid score >= HYBRID_THRESHOLD?
-             ├─ YES → Justification → return retrieval results
-             └─ NO  → GenerationAgent (DALL·E 3, using full grounding output)
-                    → Justification → return
+             ├─ YES → Multimodal Verification (Claude Vision checks each image)
+             │          → enough verified (>= MIN_VERIFIED)?
+             │              ├─ YES → Coherence Agent (selects final BOARD_SIZE as a set)
+             │              └─ NO  → GenerationAgent fills gaps → Coherence Agent
+             └─ NO  → GenerationAgent (DALL·E 3, full generation) → Coherence Agent
+         → Justification → return
 
 Environment variables (.env):
     HYBRID_THRESHOLD   — score cutoff for retrieval vs generation (default 0.5)
     SIGLIP_WEIGHT      — weight for SigLIP image score (default 0.7)
     TEXT_WEIGHT        — weight for field text score (default 0.3)
-    TOP_K              — number of results to return (default 3)
+    CANDIDATE_K        — how many candidates to retrieve before verification (default 20)
+    BOARD_SIZE         — target number of images in the final mood board (default 9)
+    MIN_VERIFIED       — minimum verified images before triggering generation fallback (default 6)
 """
 
 import os
@@ -35,12 +40,19 @@ from agents.qwen_visual_grounding.justification_agent import QwenJustificationAg
 from agents.siglip_image_retrieval.agent import SiglipImageRetrievalAgent
 from agents.field_text_retrieval.agent import FieldTextRetrievalAgent
 from agents.generation.agent import GenerationAgent
+from agents.multimodal_verification.agent import MultimodalVerificationAgent
+from agents.coherence.agent import CoherenceAgent
 
 # ── Config ────────────────────────────────────────────────────────────────────
 HYBRID_THRESHOLD = float(os.getenv("HYBRID_THRESHOLD", "0.5"))
 SIGLIP_WEIGHT    = float(os.getenv("SIGLIP_WEIGHT",    "0.7"))
 TEXT_WEIGHT      = float(os.getenv("TEXT_WEIGHT",      "0.3"))
-TOP_K            = int(os.getenv("TOP_K", "3"))
+CANDIDATE_K      = int(os.getenv("CANDIDATE_K", "20"))
+BOARD_SIZE       = int(os.getenv("BOARD_SIZE",  "9"))
+MIN_VERIFIED     = int(os.getenv("MIN_VERIFIED", "6"))
+
+# Keep TOP_K for backward compatibility — used only in the uploaded-images branch
+TOP_K = int(os.getenv("TOP_K", "3"))
 
 
 def run_pipeline(
@@ -66,11 +78,13 @@ def run_pipeline(
     print("=" * 60)
 
     # ── Init agents ───────────────────────────────────────────────────────────
-    grounding_agent     = QwenVisualGroundingAgent()
-    justification_agent = QwenJustificationAgent()
-    siglip_agent        = SiglipImageRetrievalAgent(top_k=TOP_K)
-    text_agent          = FieldTextRetrievalAgent(top_k=TOP_K)
-    generation_agent    = GenerationAgent()
+    grounding_agent      = QwenVisualGroundingAgent()
+    justification_agent  = QwenJustificationAgent()
+    siglip_agent         = SiglipImageRetrievalAgent(top_k=CANDIDATE_K)
+    text_agent           = FieldTextRetrievalAgent(top_k=CANDIDATE_K)
+    generation_agent     = GenerationAgent()
+    verification_agent   = MultimodalVerificationAgent(min_verified=MIN_VERIFIED)
+    coherence_agent      = CoherenceAgent(target_count=BOARD_SIZE)
 
     # ── Step 1: Visual Grounding ──────────────────────────────────────────────
     # Converts abstract user text into structured visual concepts.
@@ -102,14 +116,12 @@ def run_pipeline(
         _log_done(results)
         return results
 
-    # ── Branch B: no uploads → hybrid retrieval, fallback to generation ───────
+    # ── Branch B: no uploads → hybrid retrieval → verification → coherence ──────
     print("\n[Pipeline] No uploads — running hybrid retrieval.")
 
-    # Step 2: Hybrid retrieval over full 25k dataset
-    # SigLIP scores visual similarity (image embeddings vs text query)
-    # FieldText scores semantic similarity (field embeddings vs grounding fields)
-    # final_score = SIGLIP_WEIGHT * siglip_score + TEXT_WEIGHT * text_score
-    print(f"\n[Step 2] Hybrid Retrieval (siglip={SIGLIP_WEIGHT}, text={TEXT_WEIGHT})...")
+    # Step 2: Hybrid retrieval — fetch CANDIDATE_K images to give verification
+    # and coherence enough to work with
+    print(f"\n[Step 2] Hybrid Retrieval (siglip={SIGLIP_WEIGHT}, text={TEXT_WEIGHT}, k={CANDIDATE_K})...")
     candidates = text_agent.merge_with_siglip(
         grounding_output=grounding,
         siglip_agent=siglip_agent,
@@ -117,7 +129,7 @@ def run_pipeline(
 
     top_score = candidates[0]["score"] if candidates else 0.0
     print(f"[Step 2] Top hybrid score: {top_score:.4f}  (threshold={HYBRID_THRESHOLD})")
-    for i, c in enumerate(candidates[:TOP_K]):
+    for i, c in enumerate(candidates[:5]):
         print(
             f"         [{i+1}] {c['photo_id']}  "
             f"hybrid={c['score']:.4f}  "
@@ -125,30 +137,47 @@ def run_pipeline(
             f"text={c.get('text_score', 0):.4f}"
         )
 
-    # Step 3: Threshold check — retrieval or generation
-    if top_score >= HYBRID_THRESHOLD:
-        print(f"\n[Step 3] Score sufficient — using retrieval results.")
-        images = candidates[:TOP_K]
-    else:
-        print(f"\n[Step 3] Score below threshold — falling back to GenerationAgent (DALL·E 3).")
+    # Step 3: Route — if score too low skip straight to generation
+    if top_score < HYBRID_THRESHOLD:
+        print(f"\n[Step 3] Score below threshold — generating full board with DALL·E 3.")
         images = generation_agent.run(
-            grounding_output=grounding,   # full grounding including intent, lighting, etc.
-            n=TOP_K,
+            grounding_output=grounding,
+            n=BOARD_SIZE,
             user_text=user_text,
             uploaded_image_paths=None,
             style_ref_path=None,
             siglip_agent=siglip_agent,
         )
         print(f"[Step 3] {len(images)} image(s) generated.")
-        for i, img in enumerate(images):
-            print(
-                f"         [{i+1}] {img.get('photo_id')}  "
-                f"source={img.get('source')}  "
-                f"score={img.get('score', 0):.4f}"
-            )
+    else:
+        # Step 3a: Verify retrieved candidates with Claude Vision
+        print(f"\n[Step 3] Score sufficient — running Multimodal Verification...")
+        verified_candidates = verification_agent.run(candidates, grounding)
 
-    # Step 4: Justification
-    print(f"\n[Step 4] Justification ({len(images)} image(s))...")
+        # Step 3b: If not enough verified, generation fills the gap
+        if verification_agent.needs_generation(verified_candidates):
+            n_needed = BOARD_SIZE - sum(1 for c in verified_candidates if c["verified"])
+            print(f"\n[Step 3b] Only {sum(1 for c in verified_candidates if c['verified'])} verified — "
+                  f"generating {n_needed} more with DALL·E 3.")
+            generated = generation_agent.run(
+                grounding_output=grounding,
+                n=n_needed,
+                user_text=user_text,
+                uploaded_image_paths=None,
+                style_ref_path=None,
+                siglip_agent=siglip_agent,
+            )
+            pool = verified_candidates + generated
+        else:
+            pool = verified_candidates
+
+        # Step 4: Coherence — pick the final board as a set
+        print(f"\n[Step 4] Coherence Agent (selecting {BOARD_SIZE} from {len(pool)} candidates)...")
+        images = coherence_agent.run(pool, grounding)
+        print(f"[Step 4] {len(images)} image(s) selected for the board.")
+
+    # Step 5: Justification
+    print(f"\n[Step 5] Justification ({len(images)} image(s))...")
     results = justification_agent.run(user_text, images)
 
     _log_done(results)
