@@ -33,9 +33,9 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
  
 # Per-field weights — must sum to 1.0
 FIELD_WEIGHTS = {
-    "visual_description": 1/3,
+    "visual_description": 1/2,
     "mood":               1/3,
-    "color_palette":      1/3,
+    "color_palette":      1/6,
 }
  
 SIGLIP_WEIGHT = float(os.getenv("SIGLIP_WEIGHT", "0.3"))
