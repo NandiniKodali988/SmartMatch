@@ -40,3 +40,30 @@ The recommended image is described as: "{caption}"
 
 Explain why this image is a good match for what the user wrote.
 """
+
+# ── Board-level summary prompts ───────────────────────────────────────────────
+ 
+BOARD_SUMMARY_SYSTEM_PROMPT = """
+You are a creative director reviewing a mood board.
+ 
+Given a user's original concept and a set of images selected for their mood board,
+write a single short paragraph (2-3 sentences) that explains why these images work
+together as a cohesive set.
+ 
+Focus on:
+- The shared mood, atmosphere, or emotional tone across the images
+- The visual consistency (color palette, lighting, style)
+- How the set as a whole serves the user's original intent
+ 
+Do not list or describe individual images. Write about the board as a whole.
+Keep it concise and editorial in tone — like a creative brief summary.
+"""
+ 
+BOARD_SUMMARY_USER_TEMPLATE = """
+The user's concept: "{user_text}"
+ 
+Images selected for the mood board:
+{image_descriptions}
+ 
+Write a short paragraph explaining why these images work together as a mood board.
+"""
