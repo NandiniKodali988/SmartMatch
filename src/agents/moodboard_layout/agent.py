@@ -153,40 +153,35 @@ class MoodBoardLayoutAgent:
 
     # ── Prompt builder ────────────────────────────────────────────────────────
 
-    def _build_prompt(self, grounding_output: dict, colors: list[str]) -> str:
-        """
-        Build an aesthetic prompt from grounding output.
-        Uses mood/style/color as creative direction — not precise layout commands.
-        The template image handles layout; the prompt handles feel.
-        """
-        mood       = grounding_output.get("mood", "calm, cohesive, editorial")
-        style      = grounding_output.get("style", "editorial, documentary photography")
-        color_desc = grounding_output.get("color_palette", "soft neutral tones")
-        color_hex  = ", ".join(colors[:3]) if colors else ""
+    def _build_prompt(self, grounding_output, colors):
+        mood  = grounding_output.get("mood", "calm, editorial")
+        style = grounding_output.get("style", "editorial photography")
 
-        return (
-            "Create a high-end editorial mood board collage using the provided photos. "
-            "The composition and color harmony should feel like a high-end magazine or Pinterest mood board. "
-            "Use the last image as a loose composition guide — follow its general panel arrangement. "
+        return f"""
+    Create a high-end editorial mood board.
 
-            "\n\nIMPORTANT LAYOUT RULES: "
-            "Do NOT reuse or duplicate any image. Each source photo must appear only once. "
-            "Leave generous white margins around the entire canvas (at least 5-10% padding). "
-            "Maintain clear spacing between panels — do not let images touch or crowd each other. "
+    STRICT layout structure:
+    - Canvas: portrait orientation
+    - Left column:
+    1. One tall image
+    2. A centered color palette (5 circular swatches)
+    3. One portrait image
+    - Right column:
+    1. One wide image
+    2. A row of 2 equal images
+    3. A row of 3 equal images
 
-            f"\n\nAesthetic direction: {mood}. "
-            f"Visual style: {style}. "
-            f"Color palette: {color_desc}"
-            + (f" ({color_hex})" if color_hex else "") + ". "
+    Rules:
+    - Follow this structure EXACTLY (do not rearrange blocks)
+    - Do NOT crop important subjects
+    - Keep spacing clean and consistent
+    - Include visible color swatches using: {", ".join(colors)}
 
-            "\n\nLayout feel: editorial, airy, minimal. "
-            "Balanced negative space, not dense. "
-            "Some panels should be intentionally smaller to create breathing room. "
-
-            "\n\nUse the actual photo content from the source images — do not alter them. "
-            "No duplicates. No cropping that removes key subjects. "
-            "White background. Photorealistic result."
-        )
+    Aesthetic:
+    - Mood: {mood}
+    - Style: {style}
+    - White background, editorial, airy, Pinterest-style
+    """
 
     # ── Template selection ────────────────────────────────────────────────────
 
@@ -450,7 +445,7 @@ class MoodBoardLayoutAgent:
                 model=IMAGE_MODEL,
                 image=image_files,
                 prompt=prompt,
-                size=DALLE_SIZE,
+                size="1024x1792",
                 n=1,
             )
             item = resp.data[0]
