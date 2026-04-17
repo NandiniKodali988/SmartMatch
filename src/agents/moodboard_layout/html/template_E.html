@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 2400px;
+    height: 3200px;
+    background: #ffffff;
+    padding: 32px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .board {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 16px;
+  }
+  .left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .img-cell {
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .img-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .swatch-cell {
+    background: #f8f8f6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .swatch-row { display: flex; gap: 12px; align-items: center; justify-content: center; }
+  .dot {
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- Left column: tall portrait + swatch + portrait -->
+  <div class="left-col">
+    <div class="img-cell" style="flex: 1.6;">
+      <img src="{{image_1}}" />
+    </div>
+    <div class="swatch-cell" style="flex: 0.5;">
+      <div class="swatch-row">
+        <span class="dot" style="width:54px;height:54px;background:{{color_1}};"></span>
+        <span class="dot" style="width:54px;height:54px;background:{{color_2}};"></span>
+      </div>
+      <div class="swatch-row">
+        <span class="dot" style="width:38px;height:38px;background:{{color_3}};"></span>
+        <span class="dot" style="width:38px;height:38px;background:{{color_4}};"></span>
+        <span class="dot" style="width:38px;height:38px;background:{{color_5}};"></span>
+      </div>
+    </div>
+    <div class="img-cell" style="flex: 1.4;">
+      <img src="{{image_2}}" />
+    </div>
+  </div>
+
+  <!-- Right column: stacked rows -->
+  <div class="right-col">
+    <!-- Top: single wide -->
+    <div class="img-cell" style="flex: 1.1;">
+      <img src="{{image_3}}" />
+    </div>
+    <!-- Middle: two equal -->
+    <div style="display:flex; gap:16px; flex:1;">
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_4}}" />
+      </div>
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_5}}" />
+      </div>
+    </div>
+    <!-- Bottom: three small -->
+    <div style="display:flex; gap:16px; flex:0.85;">
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_6}}" />
+      </div>
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_7}}" />
+      </div>
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_8}}" />
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

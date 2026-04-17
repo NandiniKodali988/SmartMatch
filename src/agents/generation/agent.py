@@ -49,8 +49,8 @@ except ImportError:
 load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────────────
-DALLE_MODEL          = os.getenv("DALLE_MODEL",      "dall-e-3")
-EDIT_MODEL           = os.getenv("EDIT_MODEL",       "gpt-image-1")
+DALLE_MODEL          = os.getenv("DALLE_MODEL",      "gpt-image-1.5")
+EDIT_MODEL           = os.getenv("EDIT_MODEL",       "gpt-image-1.5")
 DALLE_SIZE           = os.getenv("DALLE_SIZE",       "1024x1024")
 DALLE_QUALITY        = os.getenv("DALLE_QUALITY",    "standard")
 CLAUDE_MODEL         = os.getenv("GROUNDING_MODEL",  "claude-haiku-4-5-20251001")
