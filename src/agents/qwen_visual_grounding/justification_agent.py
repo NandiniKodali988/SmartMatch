@@ -10,7 +10,7 @@ try:
         BOARD_SUMMARY_USER_TEMPLATE,
     )
 except ImportError:
-    from agents.qwen_visual_grounding.prompts import (
+    from src.agents.qwen_visual_grounding.prompts import (
         JUSTIFICATION_SYSTEM_PROMPT,
         JUSTIFICATION_USER_TEMPLATE,
         BOARD_SUMMARY_SYSTEM_PROMPT,
@@ -24,74 +24,62 @@ MODEL = os.getenv("GROUNDING_MODEL", "claude-haiku-4-5-20251001")
 
 class QwenJustificationAgent:
     """
-    Generates per-image justifications and an optional board-level summary.
-
-    Methods
-    -------
-    run(user_text, images)
-        Original method — adds a 'justification' field to each image dict.
-
-    run_with_board_summary(user_text, images)
-        Extended method — same as run(), but also returns a one-paragraph
-        board_summary explaining why the images work together as a set.
+    Generates:
+    1. Per-image justifications
+    2. Board-level summary (why the set works together)
     """
 
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        self.client = anthropic.Anthropic(
+            api_key=os.environ["ANTHROPIC_API_KEY"]
+        )
 
-    # ── Public interface ──────────────────────────────────────────────────────
+    # ── Public Interface ──────────────────────────────────────────────────────
 
     def run(self, user_text: str, images: list) -> list:
         """
-        Adds a 'justification' field to each image dict.
-
-        Args:
-            user_text : the original text the user submitted
-            images    : list of dicts, each with at least photo_id, image_url,
-                        caption, score
-
-        Returns:
-            same list with 'justification' added to each item
+        Backward-compatible method:
+        Adds 'justification' to each image dict.
         """
         print(f"Generating justifications for {len(images)} image(s)...")
 
         results = []
         for i, image in enumerate(images):
             caption = image.get("caption", "")
-            print(f"  [{i+1}/{len(images)}] Justifying image {image.get('photo_id', '?')}...")
+
+            print(
+                f"  [{i+1}/{len(images)}] Justifying image {image.get('photo_id', '?')}..."
+            )
+
             justification = self._justify(user_text, caption)
-            results.append({**image, "justification": justification})
+
+            results.append({
+                **image,
+                "justification": justification
+            })
 
         print("Done generating justifications.")
         return results
 
-    def run_with_board_summary(
-        self,
-        user_text: str,
-        images: list,
-    ) -> tuple[list, str]:
+    def run_with_board_summary(self, user_text: str, images: list) -> tuple[list, str]:
         """
-        Same as run(), but also generates a board-level summary.
-
-        Returns:
-            (results, board_summary)
-                results       : list of image dicts with 'justification' added
-                board_summary : one paragraph explaining the board as a whole
+        Full method:
+        Returns per-image justifications + board-level summary.
         """
-        # Per-image justifications
+        # Step 1: Per-image justifications
         results = self.run(user_text, images)
 
-        # Board-level summary
+        # Step 2: Board-level summary
         print("Generating board summary...")
         board_summary = self._summarize_board(user_text, results)
         print("Done.")
 
         return results, board_summary
 
-    # ── Internal ──────────────────────────────────────────────────────────────
+    # ── Internal Methods ──────────────────────────────────────────────────────
 
     def _justify(self, user_text: str, caption: str) -> str:
-        """Generate a per-image justification."""
+        """Generate explanation for a single image."""
         try:
             response = self.client.messages.create(
                 model=MODEL,
@@ -107,18 +95,19 @@ class QwenJustificationAgent:
                     }
                 ],
             )
+
             return response.content[0].text.strip()
 
         except Exception as e:
-            print(f"    Warning: justification failed ({e}). Skipping.")
+            print(f"    Warning: justification failed ({e})")
             return ""
 
     def _summarize_board(self, user_text: str, images: list) -> str:
         """
-        Generate a one-paragraph summary explaining why the board
-        works as a cohesive set.
+        Generate a cohesive explanation for the full image set.
         """
-        # Build a compact description of all images for Claude
+
+        # Build compact description of all images
         image_descriptions = "\n".join([
             f"- {img.get('caption', '')[:100]}"
             for img in images
@@ -143,8 +132,9 @@ class QwenJustificationAgent:
                     }
                 ],
             )
+
             return response.content[0].text.strip()
 
         except Exception as e:
-            print(f"    Warning: board summary failed ({e}).")
+            print(f"    Warning: board summary failed ({e})")
             return ""

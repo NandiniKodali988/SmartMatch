@@ -41,6 +41,7 @@ from agents.siglip_image_retrieval.agent import SiglipImageRetrievalAgent
 from agents.field_text_retrieval.agent import FieldTextRetrievalAgent
 from agents.generation.agent import GenerationAgent
 from agents.multimodal_verification.agent import MultimodalVerificationAgent
+from src.agents.memory.memory_manager import MemoryManager
 from agents.coherence.agent import CoherenceAgent
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -91,7 +92,15 @@ def run_pipeline(
     # Full grounding output (including intent, lighting, color_palette) is
     # passed downstream to all agents that need it.
     print("\n[Step 1] Visual Grounding...")
-    grounding = grounding_agent.run(user_text)
+    # grounding = grounding_agent.run(user_text)
+    
+    previous_grounding = memory.get_last()
+
+    grounding = grounding_agent.run(
+        user_text,
+        previous_grounding=previous_grounding
+    )
+    memory.add(user_text, grounding)
     print(f"         visual_description : {grounding.get('visual_description', '')[:80]}...")
     print(f"         intent             : {grounding.get('intent', '')}")
     print(f"         mood               : {grounding.get('mood', '')}")
@@ -218,6 +227,7 @@ if __name__ == "__main__":
         help="Style reference image path for composite mode (optional)",
     )
     args = parser.parse_args()
+    memory = MemoryManager()
 
     results = run_pipeline(
         user_text=args.query,
