@@ -10,7 +10,7 @@ try:
         BOARD_SUMMARY_USER_TEMPLATE,
     )
 except ImportError:
-    from src.agents.qwen_visual_grounding.prompts import (
+    from agents.qwen_visual_grounding.prompts import (
         JUSTIFICATION_SYSTEM_PROMPT,
         JUSTIFICATION_USER_TEMPLATE,
         BOARD_SUMMARY_SYSTEM_PROMPT,

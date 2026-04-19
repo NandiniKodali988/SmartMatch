@@ -7,7 +7,7 @@ try:
     from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when run directly
 except ImportError:
     # from agents.qwen_visual_grounding.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when imported by pipeline
-    from src.agents.qwen_visual_grounding.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
+    from agents.qwen_visual_grounding.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
     
     
 
