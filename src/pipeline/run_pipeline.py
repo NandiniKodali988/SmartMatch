@@ -41,7 +41,7 @@ from agents.siglip_image_retrieval.agent import SiglipImageRetrievalAgent
 from agents.field_text_retrieval.agent import FieldTextRetrievalAgent
 from agents.generation.agent import GenerationAgent
 from agents.multimodal_verification.agent import MultimodalVerificationAgent
-from src.agents.memory.memory_manager import MemoryManager
+from agents.memory.memory_manager import MemoryManager
 from agents.coherence.agent import CoherenceAgent
 
 # ── Config ────────────────────────────────────────────────────────────────────
