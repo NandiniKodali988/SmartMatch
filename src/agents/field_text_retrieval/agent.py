@@ -79,7 +79,8 @@ class FieldTextRetrievalAgent:
  
         # Load pre-computed field embeddings
         print("[FieldTextRetrieval] Loading field embeddings...")
-        npz = np.load(EMBEDDING_NPZ)
+        # npz = np.load(EMBEDDING_NPZ)
+        npz = np.load(EMBEDDING_NPZ, allow_pickle=True)
         self.field_embeddings = {field: npz[field] for field in FIELD_WEIGHTS}
         shape = next(iter(self.field_embeddings.values())).shape
         print(f"[FieldTextRetrieval] Embeddings loaded — shape per field: {shape}")
