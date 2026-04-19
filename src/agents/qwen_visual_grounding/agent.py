@@ -6,7 +6,10 @@ from dotenv import load_dotenv
 try:
     from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when run directly
 except ImportError:
-    from agents.qwen_visual_grounding.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when imported by pipeline
+    # from agents.qwen_visual_grounding.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE  # when imported by pipeline
+    from src.agents.qwen_visual_grounding.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
+    
+    
 
 load_dotenv()
 
@@ -24,16 +27,55 @@ class QwenVisualGroundingAgent:
         self.client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
         self.max_retries = max_retries
 
-    def run(self, text: str) -> dict:
+    # def run(self, text: str) -> dict:
+    #     """
+    #     Main entry point. Takes a user's text and returns a dict with
+    #     visual_description, scene, mood, and style fields.
+    #     """
+    #     print(f"Grounding visual concepts for: '{text}'")
+
+    #     for attempt in range(1, self.max_retries + 1):
+    #         try:
+    #             result = self._call_model(text)
+    #             self._validate(result)
+    #             print("Visual grounding successful.")
+    #             return result
+
+    #         except (json.JSONDecodeError, ValueError) as e:
+    #             print(f"Attempt {attempt} failed: {e}")
+    #             if attempt < self.max_retries:
+    #                 print("Retrying...")
+    #                 time.sleep(1)
+    #             else:
+    #                 print("Max retries reached. Returning empty grounding.")
+    #                 return self._fallback(text)
+
+    # updated run function 
+    
+    def run(self, text: str, previous_grounding: dict = None) -> dict:
         """
-        Main entry point. Takes a user's text and returns a dict with
-        visual_description, scene, mood, and style fields.
+        Main entry point. Supports multi-turn grounding using previous context.
         """
+
         print(f"Grounding visual concepts for: '{text}'")
+
+        # Build context-aware input
+        if previous_grounding:
+            combined_text = f"""
+    Previous grounding:
+    {json.dumps(previous_grounding, indent=2)}
+
+    New user input:
+    {text}
+
+    Update and refine the visual description accordingly.
+    """
+        else:
+            combined_text = text
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                result = self._call_model(text)
+                result = self._call_model(combined_text)
                 self._validate(result)
                 print("Visual grounding successful.")
                 return result
@@ -44,9 +86,10 @@ class QwenVisualGroundingAgent:
                     print("Retrying...")
                     time.sleep(1)
                 else:
-                    print("Max retries reached. Returning empty grounding.")
+                    print("Max retries reached. Returning fallback.")
                     return self._fallback(text)
-
+                
+                
     def _call_model(self, text: str) -> dict:
         response = self.client.messages.create(
             model=MODEL,
