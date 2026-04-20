@@ -1,0 +1,17 @@
+{
+  "n_nodes": 25000,
+  "n_edges": 750000,
+  "avg_degree": 30.0,
+  "top_k": 30,
+  "threshold": 0.0,
+  "fields": [
+    "mood",
+    "color_palette",
+    "visual_description"
+  ],
+  "field_weights": {
+    "mood": 0.35,
+    "color_palette": 0.2,
+    "visual_description": 0.45
+  }
+}
