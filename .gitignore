@@ -180,3 +180,4 @@ batch_state.json
 dataset_clean.checkpoint.json
 .claude/
 image_embeddings.npy
+outputs/
