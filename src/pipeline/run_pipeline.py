@@ -196,14 +196,13 @@ def run_pipeline(
 
         # Step 4: Coherence
         print(f"\n[Step 4] Coherence Agent "
-              f"(selecting {BOARD_SIZE} from {len(pool)} candidates)...")
+              f"(selecting {BOARD_SIZE} from {min(len(pool), 20)} candidates)...")
         images = coherence_agent.run(pool[:20], grounding)
         print(f"[Step 4] {len(images)} image(s) selected.")
 
     # Step 5: Justification
-    print(f"\n[Step 4] Coherence Agent "
-      f"(selecting {BOARD_SIZE} from {min(len(pool), 20)} candidates)...")
-    images = coherence_agent.run(pool[:20], grounding)
+    print(f"\n[Step 5] Justification ({len(images)} image(s))...")
+    results = justification_agent.run(user_text, images)
 
     _log_done(results)
     return results
