@@ -181,3 +181,4 @@ dataset_clean.checkpoint.json
 .claude/
 image_embeddings.npy
 outputs/
+logs/
