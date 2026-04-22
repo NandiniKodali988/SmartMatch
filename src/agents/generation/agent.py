@@ -12,7 +12,7 @@ Two paths:
       → Retries exhausted → fall back to Path B
 
   Path B — no uploaded images / fallback
-      → DALL·E 3 pure generation using full grounding output
+      → gpt-image-1.5 3 pure generation using full grounding output
       → Returns n images with style variants for visual diversity
 
 Triggered when: hybrid retrieval score < HYBRID_THRESHOLD, or user uploaded images.
@@ -23,6 +23,7 @@ import json
 import time
 import base64
 from io import BytesIO
+from pathlib import Path
 
 import anthropic
 from openai import OpenAI
@@ -49,14 +50,14 @@ except ImportError:
 load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────────────
-DALLE_MODEL          = os.getenv("DALLE_MODEL",      "dall-e-3")
-EDIT_MODEL           = os.getenv("EDIT_MODEL",       "gpt-image-1")
+DALLE_MODEL          = os.getenv("DALLE_MODEL",      "gpt-image-1.5")
+EDIT_MODEL           = os.getenv("EDIT_MODEL",       "gpt-image-1.5")
 DALLE_SIZE           = os.getenv("DALLE_SIZE",       "1024x1024")
 DALLE_QUALITY        = os.getenv("DALLE_QUALITY",    "standard")
 CLAUDE_MODEL         = os.getenv("GROUNDING_MODEL",  "claude-haiku-4-5-20251001")
 SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD", "0.25"))
 MAX_EDIT_RETRIES     = int(os.getenv("MAX_EDIT_RETRIES", "2"))
-RATE_LIMIT_SLEEP     = 12   # seconds between DALL·E 3 calls (Tier 1: ~5 img/min)
+RATE_LIMIT_SLEEP     = 2   # seconds between DALL·E 3 calls (Tier 1: ~5 img/min)
 
 EDITING_MODES = {"inpaint", "restyle", "blend", "collage", "composite"}
 
@@ -299,10 +300,25 @@ class GenerationAgent:
             print(f"[Agent 4] Generating image {i}/{n} (variant {i})...")
             url = self._call_dalle(prompt)
             if url:
-                ts         = int(time.time())
-                filename   = f"generated_{ts}_{i}.png"
-                local_path = self._download_image(url, filename)
-                score      = self._score(siglip_agent, grounding_output, base_prompt)
+                ts       = int(time.time())
+                filename = f"generated_{ts}_{i}.png"
+
+                # Save base64 or download URL
+                if url.startswith("data:image"):
+                    # gpt-image-1 returns base64 — save directly
+                    import base64
+                    save_dir = Path("outputs/generated")
+                    save_dir.mkdir(parents=True, exist_ok=True)
+                    b64_data = url.split(",", 1)[1]
+                    img_bytes = base64.b64decode(b64_data)
+                    local_path = str(save_dir / filename)
+                    with open(local_path, "wb") as f:
+                        f.write(img_bytes)
+                    print(f"[Agent 4] Saved → {local_path}")
+                else:
+                    local_path = self._download_image(url, filename)
+
+                score = self._score(siglip_agent, grounding_output, base_prompt)
                 print(f"[Agent 4] Score={score:.4f} (text-text proxy)")
                 results.append(
                     self._pack(f"generated_{ts}_{i}", url, base_prompt, score, "dalle3", local_path)
@@ -319,12 +335,15 @@ class GenerationAgent:
                 model=DALLE_MODEL,
                 prompt=prompt,
                 size=DALLE_SIZE,
-                quality=DALLE_QUALITY,
                 n=1,
             )
-            return resp.data[0].url
+            item = resp.data[0]
+            # gpt-image-1.5 returns base64, dall-e-3 returns URL
+            if hasattr(item, "b64_json") and item.b64_json:
+                return f"data:image/png;base64,{item.b64_json}"
+            return item.url
         except Exception as e:
-            print(f"[Agent 4] DALL·E generation failed: {e}")
+            print(f"[Agent 4] Generation failed: {e}")
             return None
 
     def _build_generation_prompt(self, grounding_output: dict) -> str:
