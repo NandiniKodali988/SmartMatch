@@ -9,7 +9,7 @@ This file exists only for backward compatibility so that callers
 
 Usage (unchanged from before):
     from pipeline.run_pipeline import run_pipeline
-    results = run_pipeline("feeling burnt out after a long week")
+    results, board_summary = run_pipeline("feeling burnt out after a long week")
 """
 
 import os
@@ -28,9 +28,9 @@ def run_pipeline(
     uploaded_image_paths: list[str] | None = None,
     style_ref_path: str | None = None,
     memory: MemoryManager | None = None,
-) -> list[dict]:
+) -> tuple[list[dict], str]:
     """
-    Run the SmartMatch pipeline and return a list of image dicts.
+    Run the SmartMatch pipeline.
 
     Args:
         user_text             : raw text input from the user
@@ -39,11 +39,12 @@ def run_pipeline(
         memory                : MemoryManager for multi-turn context (optional)
 
     Returns:
-        list of result dicts, each with:
+        (results, board_summary) where results is a list of dicts, each with:
             photo_id, image_url, caption, score, source,
             siglip_score, text_score, graph_score,
             verified, verification_reason,
             coherence_rank, justification, board_reason
+        and board_summary is a paragraph explaining why the set works together.
     """
     bundle = _orchestrator.run(
         query=user_text,
@@ -51,7 +52,7 @@ def run_pipeline(
         style_ref_path=style_ref_path,
         memory=memory,
     )
-    return bundle.to_legacy_list()
+    return bundle.to_legacy_list(), bundle.board_summary
 
 
 if __name__ == "__main__":
@@ -66,11 +67,14 @@ if __name__ == "__main__":
     parser.add_argument("--style",  type=str, default=None)
     args = parser.parse_args()
 
-    results = run_pipeline(
+    results, board_summary = run_pipeline(
         user_text=args.query,
         uploaded_image_paths=args.images,
         style_ref_path=args.style,
     )
+
+    if board_summary:
+        print(f"\nBoard Summary: {board_summary}\n")
 
     print("\n=== Results ===")
     for i, r in enumerate(results, 1):
