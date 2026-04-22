@@ -60,17 +60,22 @@ def run_pipeline(
     user_text: str,
     uploaded_image_paths: list[str] | None = None,
     style_ref_path: str | None = None,
-) -> list[dict]:
+    memory: "MemoryManager | None" = None,
+) -> tuple[list[dict], str]:
     """
     Args:
         user_text             : raw text input from the user
         uploaded_image_paths  : local image file paths uploaded by the user (optional)
         style_ref_path        : style reference image for composite editing mode (optional)
+        memory                : MemoryManager instance for multi-turn context (optional)
 
     Returns:
-        list of result dicts (up to TOP_K), each containing:
-            photo_id, image_url, caption, score, source, justification
+        (results, board_summary) where results is a list of dicts containing
+        photo_id, image_url, caption, score, source, justification; and
+        board_summary is a paragraph describing why the set works together.
     """
+    if memory is None:
+        memory = MemoryManager()
     print("\n" + "=" * 60)
     print("[Pipeline] START")
     print(f"[Pipeline] user_text       : {user_text}")
@@ -120,10 +125,10 @@ def run_pipeline(
         print(f"[Step 2] {len(images)} image(s) returned.")
 
         print(f"\n[Step 3] Justification...")
-        results = justification_agent.run(user_text, images)
+        results, board_summary = justification_agent.run_with_board_summary(user_text, images)
 
         _log_done(results)
-        return results
+        return results, board_summary
 
     # ── Branch B: no uploads → hybrid retrieval → verification → coherence ──────
     print("\n[Pipeline] No uploads — running hybrid retrieval.")
@@ -187,10 +192,10 @@ def run_pipeline(
 
     # Step 5: Justification
     print(f"\n[Step 5] Justification ({len(images)} image(s))...")
-    results = justification_agent.run(user_text, images)
+    results, board_summary = justification_agent.run_with_board_summary(user_text, images)
 
     _log_done(results)
-    return results
+    return results, board_summary
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -229,11 +234,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     memory = MemoryManager()
 
-    results = run_pipeline(
+    results, board_summary = run_pipeline(
         user_text=args.query,
         uploaded_image_paths=args.images,
         style_ref_path=args.style,
+        memory=memory,
     )
+    if board_summary:
+        print(f"\nBoard Summary: {board_summary}\n")
 
     print("\n=== Final Results ===")
     for i, r in enumerate(results, 1):
