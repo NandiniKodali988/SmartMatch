@@ -302,7 +302,7 @@ class GenerationAgent:
             if url:
                 ts       = int(time.time())
                 filename = f"generated_{ts}_{i}.png"
-                
+
                 # Save base64 or download URL
                 if url.startswith("data:image"):
                     # gpt-image-1 returns base64 — save directly
@@ -317,6 +317,12 @@ class GenerationAgent:
                     print(f"[Agent 4] Saved → {local_path}")
                 else:
                     local_path = self._download_image(url, filename)
+
+                score = self._score(siglip_agent, grounding_output, base_prompt)
+                print(f"[Agent 4] Score={score:.4f} (text-text proxy)")
+                results.append(
+                    self._pack(f"generated_{ts}_{i}", url, base_prompt, score, "dalle3", local_path)
+                )
             if i < n:
                 time.sleep(RATE_LIMIT_SLEEP)
 

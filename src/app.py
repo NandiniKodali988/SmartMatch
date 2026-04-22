@@ -21,7 +21,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 # Load .env before importing any agent (agents use os.environ["ANTHROPIC_API_KEY"])
 load_dotenv(find_dotenv())
 
-from pipeline.run_pipeline import run_pipeline
+from agents.orchestrator.agent import OrchestratorAgent
+
+_orchestrator = OrchestratorAgent()
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -96,11 +98,12 @@ if run_btn:
 
     with st.spinner("Running SmartMatch pipeline..."):
         try:
-            results = run_pipeline(
-                user_text=query,
+            bundle = _orchestrator.run(
+                query=query,
                 uploaded_image_paths=uploaded_image_paths,
                 style_ref_path=style_ref_path,
             )
+            results = bundle.to_legacy_list()
         except Exception as e:
             st.error(f"Pipeline error: {e}")
             st.stop()
