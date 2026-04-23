@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 2400px;
+    height: auto;
+    background: #ffffff;
+
+    padding: 120px;
+
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .board {
+    width: 100%;
+
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+
+    gap: 28px;
+  }
+
+  .left-col,
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 28px; /* 🔥 vertical spacing */
+  }
+
+  .img-cell {
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f4f4f2; /* subtle fallback background */
+  }
+
+  .img-cell img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+
+    border-radius: 6px;
+  }
+
+  .swatch-cell {
+    background: #faf9f7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 18px;
+
+    border-radius: 8px;
+  }
+
+  .swatch-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dot {
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+
+    /* 🔥 subtle shadow 提升质感 */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  /* 🔥 让 layout 更“轻”，避免太满 */
+  .spacer {
+    height: 10px;
+  }
+
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- Left column -->
+  <div class="left-col">
+    <div class="img-cell" style="flex: 1.6;">
+      <img src="{{image_1}}" />
+    </div>
+
+    <div class="swatch-cell" style="flex: 0.55;">
+      <div class="swatch-row">
+        <span class="dot" style="width:54px;height:54px;background:{{color_1}};"></span>
+        <span class="dot" style="width:54px;height:54px;background:{{color_2}};"></span>
+      </div>
+      <div class="swatch-row">
+        <span class="dot" style="width:38px;height:38px;background:{{color_3}};"></span>
+        <span class="dot" style="width:38px;height:38px;background:{{color_4}};"></span>
+        <span class="dot" style="width:38px;height:38px;background:{{color_5}};"></span>
+      </div>
+    </div>
+
+    <div class="img-cell" style="flex: 1.3;">
+      <img src="{{image_2}}" />
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div class="right-col">
+
+    <!-- Top -->
+    <div class="img-cell" style="flex: 1.1;">
+      <img src="{{image_3}}" />
+    </div>
+
+    <!-- Middle -->
+    <div style="display:flex; gap:28px; flex:1;">
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_4}}" />
+      </div>
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_5}}" />
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div style="display:flex; gap:28px; flex:0.8;">
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_6}}" />
+      </div>
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_7}}" />
+      </div>
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_8}}" />
+      <div class="img-cell" style="flex:1;">
+        <img src="{{image_9}}" />
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>

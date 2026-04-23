@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 2400px;
+    height: auto;
+    background: #ffffff;
+    padding: 120px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .board {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .img-cell {
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f4f4f2;
+  }
+
+  .img-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 6px;
+  }
+
+  .swatch-cell {
+    background: #faf9f7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    border-radius: 8px;
+  }
+
+  .swatch-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dot {
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- Row 1: full-width hero -->
+  <div class="img-cell" style="height: 840px;">
+    <img src="{{image_1}}" />
+  </div>
+
+  <!-- Row 2: two equal -->
+  <div style="display: flex; gap: 28px; height: 700px;">
+    <div class="img-cell" style="flex: 1;">
+      <img src="{{image_2}}" />
+    </div>
+    <div class="img-cell" style="flex: 1;">
+      <img src="{{image_3}}" />
+    </div>
+  </div>
+
+  <!-- Row 3: three + swatch -->
+  <div style="display: flex; gap: 28px; height: 560px;">
+    <div class="img-cell" style="flex: 1;">
+      <img src="{{image_4}}" />
+    </div>
+    <div class="img-cell" style="flex: 1;">
+      <img src="{{image_5}}" />
+    </div>
+    <div class="img-cell" style="flex: 1;">
+      <img src="{{image_6}}" />
+    </div>
+    <div class="swatch-cell" style="width: 340px; flex-shrink: 0;">
+      <div class="swatch-row">
+        <span class="dot" style="width:64px;height:64px;background:{{color_1}};"></span>
+        <span class="dot" style="width:64px;height:64px;background:{{color_2}};"></span>
+      </div>
+      <div class="swatch-row">
+        <span class="dot" style="width:48px;height:48px;background:{{color_3}};"></span>
+        <span class="dot" style="width:48px;height:48px;background:{{color_4}};"></span>
+        <span class="dot" style="width:48px;height:48px;background:{{color_5}};"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: wide + small -->
+  <div style="display: flex; gap: 28px; height: 580px;">
+    <div class="img-cell" style="flex: 2;">
+      <img src="{{image_7}}" />
+    </div>
+    <div class="img-cell" style="flex: 1;">
+      <img src="{{image_8}}" />
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -52,7 +52,7 @@ load_dotenv()
 # ── Config ────────────────────────────────────────────────────────────────────
 DALLE_MODEL          = os.getenv("DALLE_MODEL",      "gpt-image-1.5")
 EDIT_MODEL           = os.getenv("EDIT_MODEL",       "gpt-image-1.5")
-DALLE_SIZE           = os.getenv("DALLE_SIZE",       "1024x1024")
+DALLE_SIZE           = os.getenv("DALLE_SIZE",       "1024x1792" )
 DALLE_QUALITY        = os.getenv("DALLE_QUALITY",    "standard")
 CLAUDE_MODEL         = os.getenv("GROUNDING_MODEL",  "claude-haiku-4-5-20251001")
 SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD", "0.25"))

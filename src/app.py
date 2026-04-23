@@ -172,10 +172,22 @@ with st.sidebar:
         st.subheader("📥 Export")
 
         # Full moodboard
+        n_all = len(st.session_state.results)
         if st.button("Build full moodboard PNG", use_container_width=True):
-            with st.spinner("Stitching…"):
-                st.session_state["_mb_all"] = _build_moodboard_png(
-                    st.session_state.results)
+            with st.spinner(f"Generating editorial moodboard ({n_all} images)… 30-60s"):
+                try:
+                    from agents.moodboard_layout.agent import MoodBoardLayoutAgent
+                    layout_agent = MoodBoardLayoutAgent()
+                    board_path = layout_agent.run(
+                        images=st.session_state.results,
+                        grounding_output=st.session_state.last_grounding or {},
+                    )
+                    with open(board_path, "rb") as f:
+                        st.session_state["_mb_all"] = f.read()
+                except Exception as e:
+                    st.warning(f"Layout agent failed: {e} — using simple stitch.")
+                    st.session_state["_mb_all"] = _build_moodboard_png(
+                        st.session_state.results)
         if "_mb_all" in st.session_state:
             st.download_button(
                 "⬇️ Download full moodboard",
@@ -189,12 +201,27 @@ with st.sidebar:
         liked_results = [r for r in st.session_state.results
                          if r.get("photo_id") in st.session_state.liked]
         if liked_results:
+            n_liked = len(liked_results)
             if st.button(
-                f"Build liked moodboard ({len(liked_results)} images)",
+                f"Build liked moodboard ({n_liked} images)",
                 use_container_width=True,
+                disabled=(n_liked < 6),
+                help="Need at least 6 liked images to build a moodboard" if n_liked < 6 else None,
             ):
-                with st.spinner("Stitching…"):
-                    st.session_state["_mb_liked"] = _build_moodboard_png(liked_results)
+                if n_liked >= 6:
+                    with st.spinner(f"Generating editorial moodboard ({n_liked} images)… 30-60s"):
+                        try:
+                            from agents.moodboard_layout.agent import MoodBoardLayoutAgent
+                            layout_agent = MoodBoardLayoutAgent()
+                            board_path = layout_agent.run(
+                                images=liked_results,
+                                grounding_output=st.session_state.last_grounding or {},
+                            )
+                            with open(board_path, "rb") as f:
+                                st.session_state["_mb_liked"] = f.read()
+                        except Exception as e:
+                            st.warning(f"Layout agent failed: {e} — using simple stitch.")
+                            st.session_state["_mb_liked"] = _build_moodboard_png(liked_results)
             if "_mb_liked" in st.session_state:
                 st.download_button(
                     "⬇️ Download liked moodboard",
@@ -484,9 +511,7 @@ if st.session_state.results:
                                 with tempfile.NamedTemporaryFile(
                                     delete=False, suffix=".png"
                                 ) as tf:
-                                    img = PILImage.open(io.BytesIO(img_bytes)).convert("RGB")
-                                    img.thumbnail((1024, 1024), PILImage.LANCZOS)
-                                    img.save(tf.name, format="PNG")
+                                    tf.write(img_bytes)
                                     tmp_path = tf.name
 
                             with st.spinner(f"Editing Image {img_idx}…"):

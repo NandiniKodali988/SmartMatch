@@ -1,0 +1,1202 @@
+# """
+# src/agents/moodboard_layout/agent.py
+
+# Mood Board Layout Agent (v3)
+# -----------------------------
+# Three-step process:
+
+#   Step 1: Claude picks best HTML template (B/D/E) based on image aspect ratios
+#   Step 2: Fill HTML template with real image URLs + extracted colors,
+#           render via Playwright → template reference PNG
+#   Step 3: gpt-image-1.5 composite:
+#             input = [9 source images (aspect-ratio preserved) + template PNG]
+#             output = final mood board PNG
+
+# Key changes from v2:
+#   - Images passed individually (not squashed into a grid) so model sees real proportions
+#   - Prompt uses aesthetic language instead of precise layout instructions
+#   - Prompt is dynamically built from grounding output (mood, style, color palette)
+
+# Setup (run once):
+#     pip install playwright colorthief pillow requests openai anthropic
+#     playwright install chromium
+
+# HTML template files must live at:
+#     src/agents/moodboard_layout/html/template_F.html  (6 images)
+#     src/agents/moodboard_layout/html/template_G.html  (7 images)
+#     src/agents/moodboard_layout/html/template_B.html  (7 images, alt)
+#     src/agents/moodboard_layout/html/template_D.html  (8 images)
+#     src/agents/moodboard_layout/html/template_E.html  (9 images)
+# """
+
+# import os
+# import time
+# import base64
+# import argparse
+# import requests
+# import anthropic
+# from PIL import Image
+# from pathlib import Path
+# from io import BytesIO
+# from dotenv import load_dotenv
+# from openai import OpenAI
+
+# load_dotenv()
+
+# CLAUDE_MODEL = os.getenv("GROUNDING_MODEL", "claude-haiku-4-5-20251001")
+# IMAGE_MODEL  = os.getenv("EDIT_MODEL",      "gpt-image-1")
+# DALLE_SIZE   = os.getenv("DALLE_SIZE",      "1024x1024")
+
+# BASE_DIR     = Path(__file__).resolve().parents[3]
+# HTML_DIR     = Path(__file__).resolve().parent / "html"
+# TEMPLATE_DIR = Path(__file__).resolve().parent / "rendered_templates"
+# OUTPUT_DIR   = BASE_DIR / "outputs/moodboard"
+
+# UNSPLASH_PARAMS = {"w": "1200", "q": "85", "fm": "jpg"}
+
+# # Maps image count → list of valid template keys for that count
+# TEMPLATES_BY_COUNT = {
+#     6: ["F"],
+#     7: ["G", "B"],
+#     8: ["D"],
+#     9: ["E", "D"],
+# }
+
+# TEMPLATE_META = {
+#     "F": {
+#         "description": (
+#             "Full-width hero at top. Two equal images. "
+#             "Color swatches + two images. Full-width bottom. "
+#             "Best for: 6 images, clean editorial look."
+#         ),
+#         "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6"],
+#         "n_images": 6,
+#     },
+#     "G": {
+#         "description": (
+#             "Large left + two stacked right. Three equal middle row. "
+#             "Color swatches + wide image bottom. "
+#             "Best for: 7 images, mix of tall and wide."
+#         ),
+#         "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6","image_7"],
+#         "n_images": 7,
+#     },
+#     "B": {
+#         "description": (
+#             "Large image top-left, medium top-right with color swatches. "
+#             "Three equal images in middle row. Small + wide in bottom row. "
+#             "Best for: 7 images, mix of portrait and landscape."
+#         ),
+#         "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6","image_7"],
+#         "n_images": 7,
+#     },
+#     "D": {
+#         "description": (
+#             "One full-width hero image at top. Two equal images below. "
+#             "Three images + color swatches in third row. Wide + small at bottom. "
+#             "Best for: 8 images, at least one strong wide landscape image."
+#         ),
+#         "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6","image_7","image_8"],
+#         "n_images": 8,
+#     },
+#     "E": {
+#         "description": (
+#             "Left column: tall portrait + color swatches + portrait. "
+#             "Right column: wide top, two equal middle, three small + wide bottom. "
+#             "Best for: 9 images, mix with at least 2 strong portrait images."
+#         ),
+#         "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6","image_7","image_8","image_9"],
+#         "n_images": 9,
+#     },
+# }
+
+
+# class MoodBoardLayoutAgent:
+#     """
+#     Builds a mood board using HTML template + gpt-image-1.5 composite.
+
+#     Usage
+#     -----
+#         agent = MoodBoardLayoutAgent()
+#         path  = agent.run(images, grounding_output)
+#     """
+
+#     def __init__(self):
+#         self.claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+#         self.openai = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+#         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+#         TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+
+#     # ── Public interface ──────────────────────────────────────────────────────
+
+#     def run(self, images: list[dict], grounding_output: dict | None = None) -> str:
+#         """
+#         Args:
+#             images          : list of image dicts with 'image_url'. Uses up to 9.
+#             grounding_output: full grounding dict (mood, style, color_palette, etc.)
+#                               Used to build the aesthetic prompt. Optional.
+#         Returns:
+#             Local path to final mood board PNG.
+#         """
+#         grounding_output = grounding_output or {}
+#         n = len(images)
+#         print(f"[MoodBoard] Building board from {n} image(s)...")
+
+#         if n < 6:
+#             raise ValueError(f"[MoodBoard] Need at least 6 images, got {n}.")
+
+#         # Download source images preserving original aspect ratios
+#         pil_images = self._download(images)
+#         unique = []
+#         seen = set()
+#         for img in pil_images:
+#             h = hash(img.tobytes())
+#             if h not in seen:
+#                 seen.add(h)
+#                 unique.append(img)
+
+#         # Clamp to 6-9 images
+#         pil_images = unique[:9]
+#         n_actual = len(pil_images)
+#         images = images[:n_actual]
+
+#         if n_actual < 6:
+#             raise ValueError(f"[MoodBoard] Could only download {n_actual} images (need 6+).")
+#         print(f"[MoodBoard] Downloaded {n_actual} image(s).")
+
+#         # Pick template based on count + orientations
+#         key = self._pick_template(pil_images, n_actual)
+#         print(f"[MoodBoard] Template: '{key}' ({n_actual} images)")
+
+#         # Extract color palette from images
+#         colors = self._extract_colors(pil_images, grounding_output)
+#         print(f"[MoodBoard] Colors: {colors}")
+
+#         # Render filled HTML → PNG (layout reference)
+#         template_png = TEMPLATE_DIR / f"template_{key}_filled.png"
+#         self._render_html(key, images, colors, template_png)
+#         print(f"[MoodBoard] Template rendered → {template_png}")
+
+#         # Build aesthetic prompt from grounding output
+#         prompt = self._build_prompt(grounding_output, colors)
+#         print(f"[MoodBoard] Prompt: {prompt[:100]}...")
+
+#         # gpt-image-1.5 composite
+#         print("[MoodBoard] Running gpt-image-1.5 composite...")
+#         out_path = self._composite(pil_images, template_png, prompt)
+#         print(f"[MoodBoard] Saved → {out_path}")
+
+#         return str(out_path)
+
+#     # ── Prompt builder ────────────────────────────────────────────────────────
+
+#     def _build_prompt(self, grounding_output, colors):
+#         mood  = grounding_output.get("mood", "calm, editorial")
+#         style = grounding_output.get("style", "editorial photography")
+
+#         return f"""
+#     Create a high-end editorial mood board.
+
+#     STRICT layout structure:
+#     - Canvas: portrait orientation
+#     - Left column:
+#     1. One tall image
+#     2. A centered color palette (5 circular swatches)
+#     3. One portrait image
+#     - Right column:
+#     1. One wide image
+#     2. A row of 2 equal images
+#     3. A row of 3 equal images
+
+#     Rules:
+#     - Follow this structure EXACTLY (do not rearrange blocks)
+#     - Do NOT crop important subjects
+#     - Keep spacing clean and consistent
+#     - Include visible color swatches using: {", ".join(colors)}
+
+#     Aesthetic:
+#     - Mood: {mood}
+#     - Style: {style}
+#     - White background, editorial, airy, Pinterest-style
+#     """
+
+#     # ── Template selection ────────────────────────────────────────────────────
+
+#     def _pick_template(self, pil_images: list, n: int | None = None) -> str:
+#         """Pick template based on image count first, then aspect ratios."""
+#         n = n or len(pil_images)
+
+#         # Get valid templates for this count
+#         valid_keys = TEMPLATES_BY_COUNT.get(n)
+#         if not valid_keys:
+#             # Fallback: clamp to nearest supported count
+#             if n <= 6:
+#                 valid_keys = ["F"]
+#             elif n == 7:
+#                 valid_keys = ["G", "B"]
+#             elif n == 8:
+#                 valid_keys = ["D"]
+#             else:
+#                 valid_keys = ["E"]
+
+#         # If only one option, return immediately
+#         if len(valid_keys) == 1:
+#             return valid_keys[0]
+
+#         # Multiple options — ask Claude to pick based on orientations
+#         orientations = []
+#         for img in pil_images:
+#             w, h = img.size
+#             r = w / h
+#             if r >= 1.3:
+#                 orientations.append("landscape")
+#             elif r <= 0.8:
+#                 orientations.append("portrait")
+#             else:
+#                 orientations.append("square")
+
+#         counts = {k: orientations.count(k) for k in ["landscape", "portrait", "square"]}
+#         options = "\n".join(
+#             f"  {k}: {TEMPLATE_META[k]['description']}"
+#             for k in valid_keys
+#         )
+#         valid_str = "/".join(valid_keys)
+
+#         prompt = (
+#             f"I have {n} mood board images:\n"
+#             f"  portrait={counts['portrait']}, landscape={counts['landscape']}, "
+#             f"square={counts['square']}\n\n"
+#             f"Templates for {n} images:\n{options}\n\n"
+#             f"Reply with ONLY one letter: {valid_str}."
+#         )
+
+#         try:
+#             resp = self.claude.messages.create(
+#                 model=CLAUDE_MODEL,
+#                 max_tokens=5,
+#                 messages=[{"role": "user", "content": prompt}],
+#             )
+#             choice = resp.content[0].text.strip().upper()
+#             if choice in valid_keys:
+#                 return choice
+#         except Exception as e:
+#             print(f"[MoodBoard] Template selection failed: {e}")
+
+#         # Fallback: return first valid option
+#         return valid_keys[0]
+
+#     # ── Color extraction ──────────────────────────────────────────────────────
+
+#     def _extract_colors(self, pil_images: list, grounding_output: dict, n: int = 5) -> list[str]:
+#         """
+#         Extracts a high-quality, magazine-style color palette.
+
+#         Strategy:
+#         1. Extract many candidate colors from images
+#         2. Score colors using aesthetic + prompt alignment
+#         3. Enforce diversity + harmony (no muddy or duplicate tones)
+#         4. Return a curated palette (like Pinterest / editorial boards)
+#         """
+#         try:
+#             from colorthief import ColorThief
+
+#             # ── Step 1: collect candidate colors ───────────────────────────────
+#             candidates = []
+
+#             for img in pil_images[:6]:
+#                 buf = BytesIO()
+#                 img.convert("RGB").save(buf, format="PNG")
+#                 buf.seek(0)
+
+#                 palette = ColorThief(buf).get_palette(color_count=6, quality=4)
+#                 candidates.extend(palette)
+
+#             if not candidates:
+#                 return self._fallback_palette()
+
+#             # ── Step 2: score colors using prompt + aesthetics ─────────────────
+#             scored = [(rgb, self._color_score(rgb, grounding_output)) for rgb in candidates]
+
+#             # Sort best → worst
+#             scored.sort(key=lambda x: x[1], reverse=True)
+
+#             # ── Step 3: pick diverse + harmonious colors ───────────────────────
+#             selected = []
+
+#             for rgb, _ in scored:
+#                 if not self._too_close(rgb, selected):
+#                     selected.append(rgb)
+#                 if len(selected) >= n:
+#                     break
+
+#             # Fill if needed
+#             while len(selected) < n:
+#                 selected.append((200, 200, 195))
+
+#             # ── Step 4: return hex palette ─────────────────────────────────────
+#             return [self._rgb_to_hex(c) for c in selected[:n]]
+
+#         except ImportError:
+#             print("[MoodBoard] colorthief not installed — using fallback palette.")
+#             return self._fallback_palette()
+        
+#     def _color_score(self, rgb, grounding_output):
+#         """
+#         Scores a color based on:
+#         - brightness balance
+#         - saturation (avoid overly harsh colors)
+#         - prompt alignment (warm / cool / neutral / luxury)
+#         """
+#         r, g, b = rgb
+
+#         # Basic features
+#         brightness = (r + g + b) / 3
+#         saturation = max(rgb) - min(rgb)
+#         warmth = r - b
+
+#         text  = grounding_output.get("color_palette", "").lower()
+#         mood  = grounding_output.get("mood", "").lower()
+#         style = grounding_output.get("style", "").lower()
+
+#         score = 0
+
+#         # ── 1. Prefer balanced brightness (editorial look) ──
+#         score += 100 - abs(brightness - 170)
+
+#         # ── 2. Penalize overly saturated colors (too "cheap looking") ──
+#         if saturation > 180:
+#             score -= 80
+#         elif saturation > 120:
+#             score -= 30
+#         else:
+#             score += 20
+
+#         # ── 3. Prompt alignment ──
+#         if any(k in text for k in ["warm", "beige", "peach", "pink"]):
+#             score += max(0, warmth) * 0.5
+
+#         if any(k in text for k in ["cool", "blue", "green"]):
+#             score += max(0, b - r) * 0.5
+
+#         if any(k in text for k in ["neutral", "soft", "muted"]):
+#             score += 40 - abs(saturation - 60)
+
+#         # ── 4. Luxury/editorial filtering ──
+#         if any(k in mood for k in ["luxury", "editorial"]):
+#             if brightness > 230 or brightness < 50:
+#                 score -= 40
+#             if saturation > 150:
+#                 score -= 50
+
+#         # ── 5. Avoid ugly colors ──
+#         if r < 40 and g < 40 and b < 40:
+#             score -= 100  # too dark
+#         if r > 240 and g > 240 and b > 240:
+#             score -= 80   # too white
+
+#         return score
+
+
+#     def _too_close(self, rgb, selected, threshold=45):
+#         """Avoid similar colors (keeps palette clean & diverse)."""
+#         for s in selected:
+#             if self._cdist(rgb, s) < threshold:
+#                 return True
+#         return False
+
+
+#     def _rgb_to_hex(self, rgb):
+#         return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+
+#     def _fallback_palette(self):
+#         """Fallback palette (soft editorial neutral tones)."""
+#         return ["#d8cfc4", "#a8b5ad", "#c9a27e", "#6e8577", "#eee6da"]
+
+#     def _cdist(self, c1, c2) -> float:
+#         return sum((a - b) ** 2 for a, b in zip(c1, c2)) ** 0.5
+
+#     # ── HTML rendering ────────────────────────────────────────────────────────
+
+#     def _img_to_base64(self, url: str) -> str:
+#         """Download image and return as base64 data URI."""
+#         try:
+#             params = UNSPLASH_PARAMS if "images.unsplash.com" in url else {}
+#             resp = requests.get(url, params=params, timeout=20)
+#             resp.raise_for_status()
+#             # Resize to max 1600px to keep HTML size manageable
+#             img = Image.open(BytesIO(resp.content)).convert("RGB")
+#             w, h = img.size
+#             scale = min(1600 / w, 1600 / h, 1.0)
+#             if scale < 1.0:
+#                 img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+#             buf = BytesIO()
+#             img.save(buf, format="JPEG", quality=85)
+#             b64 = base64.b64encode(buf.getvalue()).decode()
+#             return f"data:image/jpeg;base64,{b64}"
+#         except Exception as e:
+#             print(f"  [render] Failed to embed image {url[:60]}: {e}")
+#             return ""
+
+#     def _render_html(
+#         self,
+#         key: str,
+#         images: list[dict],
+#         colors: list[str],
+#         out_path: Path,
+#     ):
+#         html_path = HTML_DIR / f"template_{key}.html"
+#         if not html_path.exists():
+#             raise FileNotFoundError(
+#                 f"HTML template not found: {html_path}\n"
+#                 f"Place template HTML files in: {HTML_DIR}"
+#             )
+
+#         html = html_path.read_text(encoding="utf-8")
+
+#         # Embed images as base64 — Playwright needs no network requests
+#         slots = TEMPLATE_META[key]["image_slots"]
+#         print(f"[MoodBoard] Embedding {len(slots)} images as base64...")
+#         for i, slot in enumerate(slots):
+#             if i < len(images):
+#                 url = images[i].get("image_url", "")
+#                 data_uri = self._img_to_base64(url) if url else ""
+#             else:
+#                 data_uri = ""
+#             html = html.replace(f"{{{{{slot}}}}}", data_uri)
+
+#         # Fill color slots
+#         for i in range(1, 6):
+#             color = colors[i - 1] if i - 1 < len(colors) else "#cccccc"
+#             html = html.replace(f"{{{{color_{i}}}}}", color)
+
+#         try:
+#             from playwright.sync_api import sync_playwright
+#             with sync_playwright() as p:
+#                 browser = p.chromium.launch()
+#                 # Images are base64-embedded — no network needed, load instantly
+#                 page = browser.new_page(viewport={"width": 2400, "height": 4000})
+#                 page.set_content(html, wait_until="domcontentloaded")
+#                 # Let layout settle
+#                 page.wait_for_timeout(800)
+#                 # Fit viewport to actual content height
+#                 height = page.evaluate("document.body.scrollHeight")
+#                 page.set_viewport_size({"width": 2400, "height": max(height, 100)})
+#                 page.wait_for_timeout(200)
+#                 page.screenshot(path=str(out_path), full_page=True)
+#                 browser.close()
+#         except ImportError:
+#             raise ImportError(
+#                 "Playwright not installed.\n"
+#                 "Run: pip install playwright && playwright install chromium"
+#             )
+
+#     # ── gpt-image-1.5 composite ───────────────────────────────────────────────
+
+#     def _composite(
+#         self,
+#         pil_images: list,
+#         template_png: Path,
+#         prompt: str,
+#     ) -> Path:
+#         """
+#         Pass each source image individually (aspect-ratio preserved, not squashed into a grid)
+#         + template PNG as the last image.
+
+#         gpt-image-1.5 sees the real proportions of each photo, which lets it make
+#         better layout decisions than when all images are resquished into equal squares.
+#         """
+#         image_files = []
+
+#         # Add each source image individually, preserving aspect ratio
+#         # Resize to max 1024px on the long side to stay within token limits
+#         for i, pil in enumerate(pil_images):
+#             buf = BytesIO()
+#             img = self._resize_keep_aspect(pil, max_px=1024)
+#             img.convert("RGB").save(buf, format="PNG")
+#             buf.seek(0)
+#             buf.name = f"photo_{i+1}.png"
+#             image_files.append(buf)
+
+#         # Template PNG goes last — model uses it as layout reference
+#         tpl_buf = BytesIO()
+#         Image.open(template_png).convert("RGB").save(tpl_buf, format="PNG")
+#         tpl_buf.seek(0)
+#         tpl_buf.name = "template.png"
+#         image_files.append(tpl_buf)
+
+#         try:
+#             resp = self.openai.images.edit(
+#                 model=IMAGE_MODEL,
+#                 image=image_files,
+#                 prompt=prompt,
+#                 size="1024x1024",
+#                 n=1,
+#             )
+#             item = resp.data[0]
+#             if hasattr(item, "b64_json") and item.b64_json:
+#                 img_bytes = base64.b64decode(item.b64_json)
+#             else:
+#                 img_bytes = requests.get(item.url, timeout=30).content
+
+#         except Exception as e:
+#             print(f"[MoodBoard] Composite failed: {e} — using rendered template as fallback.")
+#             img_bytes = template_png.read_bytes()
+
+#         out = OUTPUT_DIR / f"moodboard_{int(time.time())}.png"
+#         out.write_bytes(img_bytes)
+#         return out
+
+#     # ── Helpers ───────────────────────────────────────────────────────────────
+
+#     def _resize_keep_aspect(self, img: Image.Image, max_px: int = 1024) -> Image.Image:
+#         """Resize image so the longest side is max_px, preserving aspect ratio."""
+#         w, h  = img.size
+#         scale = min(max_px / w, max_px / h, 1.0)  # never upscale
+#         if scale < 1.0:
+#             img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+#         return img
+
+#     def _download(self, images: list[dict]) -> list:
+#         result = []
+#         for i, d in enumerate(images):
+#             url = d.get("image_url", "")
+#             if not url:
+#                 continue
+#             try:
+#                 params = UNSPLASH_PARAMS if "images.unsplash.com" in url else {}
+#                 resp   = requests.get(url, params=params, timeout=20)
+#                 resp.raise_for_status()
+#                 pil = Image.open(BytesIO(resp.content))
+#                 result.append(pil)
+#                 print(f"  [{i+1}] {pil.size} OK")
+#             except Exception as e:
+#                 print(f"  [{i+1}] Failed: {e}")
+#         return result
+
+
+# # ── CLI: render blank template PNGs ──────────────────────────────────────────
+
+# if __name__ == "__main__":
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("--render-templates", action="store_true",
+#                         help="Render HTML templates to PNG with placeholders (run once)")
+#     args = parser.parse_args()
+
+#     if args.render_templates:
+#         try:
+#             from playwright.sync_api import sync_playwright
+#         except ImportError:
+#             print("Run: pip install playwright && playwright install chromium")
+#             exit(1)
+
+#         TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+#         placeholder = (
+#             "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ"
+#             "AAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII="
+#         )
+#         neutral = ["#d4c5b5", "#9fb0a8", "#c8a882", "#6b8275", "#e8ddd0"]
+
+#         for key in ["B", "D", "E"]:
+#             html_path = HTML_DIR / f"template_{key}.html"
+#             if not html_path.exists():
+#                 print(f"  Missing: {html_path}")
+#                 continue
+#             html = html_path.read_text(encoding="utf-8")
+#             for slot in TEMPLATE_META[key]["image_slots"]:
+#                 html = html.replace(f"{{{{{slot}}}}}", placeholder)
+#             for i in range(1, 6):
+#                 html = html.replace(f"{{{{color_{i}}}}}", neutral[i - 1])
+
+#             out = TEMPLATE_DIR / f"template_{key}_blank.png"
+#             with sync_playwright() as p:
+#                 browser = p.chromium.launch()
+#                 page    = browser.new_page(viewport={"width": 2400, "height": 3200})
+#                 page.set_content(html, wait_until="domcontentloaded")
+#                 page.screenshot(path=str(out), full_page=False)
+#                 browser.close()
+#             print(f"  Rendered → {out}")
+
+"""
+src/agents/moodboard_layout/agent.py
+
+Mood Board Layout Agent (v3)
+-----------------------------
+Three-step process:
+
+  Step 1: Claude picks best HTML template (B/D/E) based on image aspect ratios
+  Step 2: Fill HTML template with real image URLs + extracted colors,
+          render via Playwright → template reference PNG
+  Step 3: gpt-image-1.5 composite:
+            input = [9 source images (aspect-ratio preserved) + template PNG]
+            output = final mood board PNG
+
+Key changes from v2:
+  - Images passed individually (not squashed into a grid) so model sees real proportions
+  - Prompt uses aesthetic language instead of precise layout instructions
+  - Prompt is dynamically built from grounding output (mood, style, color palette)
+
+Setup (run once):
+    pip install playwright colorthief pillow requests openai anthropic
+    playwright install chromium
+
+HTML template files must live at:
+    src/agents/moodboard_layout/html/template_F.html  (6 images)
+    src/agents/moodboard_layout/html/template_G.html  (7 images)
+    src/agents/moodboard_layout/html/template_B.html  (7 images, alt)
+    src/agents/moodboard_layout/html/template_D.html  (8 images)
+    src/agents/moodboard_layout/html/template_E.html  (9 images)
+"""
+
+import os
+import time
+import base64
+import argparse
+import requests
+import anthropic
+from PIL import Image
+from pathlib import Path
+from io import BytesIO
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv()
+
+CLAUDE_MODEL = os.getenv("GROUNDING_MODEL", "claude-haiku-4-5-20251001")
+IMAGE_MODEL  = os.getenv("EDIT_MODEL",      "gpt-image-1")
+DALLE_SIZE   = os.getenv("DALLE_SIZE",      "1024x1024")
+
+BASE_DIR     = Path(__file__).resolve().parents[3]
+HTML_DIR     = Path(__file__).resolve().parent / "html"
+TEMPLATE_DIR = Path(__file__).resolve().parent / "rendered_templates"
+OUTPUT_DIR   = BASE_DIR / "outputs/moodboard"
+
+UNSPLASH_PARAMS = {"w": "1200", "q": "85", "fm": "jpg"}
+
+# Maps image count → list of valid template keys for that count
+TEMPLATES_BY_COUNT = {
+    6: ["F"],
+    7: ["G", "B"],
+    8: ["D"],
+    9: ["E", "D"],
+}
+
+TEMPLATE_META = {
+    "F": {
+        "description": (
+            "Full-width hero at top. Two equal images. "
+            "Color swatches + two images. Full-width bottom. "
+            "Best for: 6 images, clean editorial look."
+        ),
+        "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6"],
+        "n_images": 6,
+    },
+    "G": {
+        "description": (
+            "Large left + two stacked right. Three equal middle row. "
+            "Color swatches + wide image bottom. "
+            "Best for: 7 images, mix of tall and wide."
+        ),
+        "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6","image_7"],
+        "n_images": 7,
+    },
+    "B": {
+        "description": (
+            "Large image top-left, medium top-right with color swatches. "
+            "Three equal images in middle row. Small + wide in bottom row. "
+            "Best for: 7 images, mix of portrait and landscape."
+        ),
+        "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6","image_7"],
+        "n_images": 7,
+    },
+    "D": {
+        "description": (
+            "One full-width hero image at top. Two equal images below. "
+            "Three images + color swatches in third row. Wide + small at bottom. "
+            "Best for: 8 images, at least one strong wide landscape image."
+        ),
+        "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6","image_7","image_8"],
+        "n_images": 8,
+    },
+    "E": {
+        "description": (
+            "Left column: tall portrait + color swatches + portrait. "
+            "Right column: wide top, two equal middle, three small + wide bottom. "
+            "Best for: 9 images, mix with at least 2 strong portrait images."
+        ),
+        "image_slots": ["image_1","image_2","image_3","image_4","image_5","image_6","image_7","image_8","image_9"],
+        "n_images": 9,
+    },
+}
+
+
+class MoodBoardLayoutAgent:
+    """
+    Builds a mood board using HTML template + gpt-image-1.5 composite.
+
+    Usage
+    -----
+        agent = MoodBoardLayoutAgent()
+        path  = agent.run(images, grounding_output)
+    """
+
+    def __init__(self):
+        self.claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        self.openai = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # ── Public interface ──────────────────────────────────────────────────────
+
+    def run(self, images: list[dict], grounding_output: dict | None = None) -> str:
+        """
+        Args:
+            images          : list of image dicts with 'image_url'. Uses up to 9.
+            grounding_output: full grounding dict (mood, style, color_palette, etc.)
+                              Used to build the aesthetic prompt. Optional.
+        Returns:
+            Local path to final mood board PNG.
+        """
+        grounding_output = grounding_output or {}
+        n = len(images)
+        print(f"[MoodBoard] Building board from {n} image(s)...")
+
+        if n < 6:
+            raise ValueError(f"[MoodBoard] Need at least 6 images, got {n}.")
+
+        # Download source images preserving original aspect ratios
+        pil_images = self._download(images)
+        unique = []
+        seen = set()
+        for img in pil_images:
+            h = hash(img.tobytes())
+            if h not in seen:
+                seen.add(h)
+                unique.append(img)
+
+        # Clamp to 6-9 images
+        pil_images = unique[:9]
+        n_actual = len(pil_images)
+        images = images[:n_actual]
+
+        if n_actual < 6:
+            raise ValueError(f"[MoodBoard] Could only download {n_actual} images (need 6+).")
+        print(f"[MoodBoard] Downloaded {n_actual} image(s).")
+
+        # Pick template based on count + orientations
+        key = self._pick_template(pil_images, n_actual)
+        print(f"[MoodBoard] Template: '{key}' ({n_actual} images)")
+
+        # Extract color palette from images
+        colors = self._extract_colors(pil_images, grounding_output)
+        print(f"[MoodBoard] Colors: {colors}")
+
+        # Render filled HTML → PNG (layout reference)
+        template_png = TEMPLATE_DIR / f"template_{key}_filled.png"
+        self._render_html(key, images, colors, template_png)
+        print(f"[MoodBoard] Template rendered → {template_png}")
+
+        # Build aesthetic prompt from grounding output
+        prompt = self._build_prompt(grounding_output, colors)
+        print(f"[MoodBoard] Prompt: {prompt[:100]}...")
+
+        # gpt-image-1.5 composite
+        print("[MoodBoard] Running gpt-image-1.5 composite...")
+        out_path = self._composite(pil_images, template_png, prompt)
+        print(f"[MoodBoard] Saved → {out_path}")
+
+        return str(out_path)
+
+    # ── Prompt builder ────────────────────────────────────────────────────────
+
+    def _build_prompt(self, grounding_output, colors):
+        mood  = grounding_output.get("mood", "calm, editorial")
+        style = grounding_output.get("style", "editorial photography")
+
+        return f"""
+    Create a high-end editorial mood board.
+
+    STRICT layout structure:
+    - Canvas: portrait orientation
+    - Left column:
+    1. One tall image
+    2. A centered color palette (5 circular swatches)
+    3. One portrait image
+    - Right column:
+    1. One wide image
+    2. A row of 2 equal images
+    3. A row of 3 equal images
+
+    Rules:
+    - Follow this structure EXACTLY (do not rearrange blocks)
+    - Do NOT crop important subjects
+    - Keep spacing clean and consistent
+    - Include visible color swatches using: {", ".join(colors)}
+
+    Aesthetic:
+    - Mood: {mood}
+    - Style: {style}
+    - White background, editorial, airy, Pinterest-style
+    """
+
+    # ── Template selection ────────────────────────────────────────────────────
+
+    def _pick_template(self, pil_images: list, n: int | None = None) -> str:
+        """Pick template based on image count first, then aspect ratios."""
+        n = n or len(pil_images)
+
+        # Get valid templates for this count
+        valid_keys = TEMPLATES_BY_COUNT.get(n)
+        if not valid_keys:
+            # Fallback: clamp to nearest supported count
+            if n <= 6:
+                valid_keys = ["F"]
+            elif n == 7:
+                valid_keys = ["G", "B"]
+            elif n == 8:
+                valid_keys = ["D"]
+            else:
+                valid_keys = ["E"]
+
+        # If only one option, return immediately
+        if len(valid_keys) == 1:
+            return valid_keys[0]
+
+        # Multiple options — ask Claude to pick based on orientations
+        orientations = []
+        for img in pil_images:
+            w, h = img.size
+            r = w / h
+            if r >= 1.3:
+                orientations.append("landscape")
+            elif r <= 0.8:
+                orientations.append("portrait")
+            else:
+                orientations.append("square")
+
+        counts = {k: orientations.count(k) for k in ["landscape", "portrait", "square"]}
+        options = "\n".join(
+            f"  {k}: {TEMPLATE_META[k]['description']}"
+            for k in valid_keys
+        )
+        valid_str = "/".join(valid_keys)
+
+        prompt = (
+            f"I have {n} mood board images:\n"
+            f"  portrait={counts['portrait']}, landscape={counts['landscape']}, "
+            f"square={counts['square']}\n\n"
+            f"Templates for {n} images:\n{options}\n\n"
+            f"Reply with ONLY one letter: {valid_str}."
+        )
+
+        try:
+            resp = self.claude.messages.create(
+                model=CLAUDE_MODEL,
+                max_tokens=5,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            choice = resp.content[0].text.strip().upper()
+            if choice in valid_keys:
+                return choice
+        except Exception as e:
+            print(f"[MoodBoard] Template selection failed: {e}")
+
+        # Fallback: return first valid option
+        return valid_keys[0]
+
+    # ── Color extraction ──────────────────────────────────────────────────────
+
+    def _extract_colors(self, pil_images: list, grounding_output: dict, n: int = 5) -> list[str]:
+        """
+        Extracts a high-quality, magazine-style color palette.
+
+        Strategy:
+        1. Extract many candidate colors from images
+        2. Score colors using aesthetic + prompt alignment
+        3. Enforce diversity + harmony (no muddy or duplicate tones)
+        4. Return a curated palette (like Pinterest / editorial boards)
+        """
+        try:
+            from colorthief import ColorThief
+
+            # ── Step 1: collect candidate colors ───────────────────────────────
+            candidates = []
+
+            for img in pil_images[:6]:
+                buf = BytesIO()
+                img.convert("RGB").save(buf, format="PNG")
+                buf.seek(0)
+
+                palette = ColorThief(buf).get_palette(color_count=6, quality=4)
+                candidates.extend(palette)
+
+            if not candidates:
+                return self._fallback_palette()
+
+            # ── Step 2: score colors using prompt + aesthetics ─────────────────
+            scored = [(rgb, self._color_score(rgb, grounding_output)) for rgb in candidates]
+
+            # Sort best → worst
+            scored.sort(key=lambda x: x[1], reverse=True)
+
+            # ── Step 3: pick diverse + harmonious colors ───────────────────────
+            selected = []
+
+            for rgb, _ in scored:
+                if not self._too_close(rgb, selected):
+                    selected.append(rgb)
+                if len(selected) >= n:
+                    break
+
+            # Fill if needed
+            while len(selected) < n:
+                selected.append((200, 200, 195))
+
+            # ── Step 4: return hex palette ─────────────────────────────────────
+            return [self._rgb_to_hex(c) for c in selected[:n]]
+
+        except ImportError:
+            print("[MoodBoard] colorthief not installed — using fallback palette.")
+            return self._fallback_palette()
+        
+    def _color_score(self, rgb, grounding_output):
+        """
+        Scores a color based on:
+        - brightness balance
+        - saturation (avoid overly harsh colors)
+        - prompt alignment (warm / cool / neutral / luxury)
+        """
+        r, g, b = rgb
+
+        # Basic features
+        brightness = (r + g + b) / 3
+        saturation = max(rgb) - min(rgb)
+        warmth = r - b
+
+        text  = grounding_output.get("color_palette", "").lower()
+        mood  = grounding_output.get("mood", "").lower()
+        style = grounding_output.get("style", "").lower()
+
+        score = 0
+
+        # ── 1. Prefer balanced brightness (editorial look) ──
+        score += 100 - abs(brightness - 170)
+
+        # ── 2. Penalize overly saturated colors (too "cheap looking") ──
+        if saturation > 180:
+            score -= 80
+        elif saturation > 120:
+            score -= 30
+        else:
+            score += 20
+
+        # ── 3. Prompt alignment ──
+        if any(k in text for k in ["warm", "beige", "peach", "pink"]):
+            score += max(0, warmth) * 0.5
+
+        if any(k in text for k in ["cool", "blue", "green"]):
+            score += max(0, b - r) * 0.5
+
+        if any(k in text for k in ["neutral", "soft", "muted"]):
+            score += 40 - abs(saturation - 60)
+
+        # ── 4. Luxury/editorial filtering ──
+        if any(k in mood for k in ["luxury", "editorial"]):
+            if brightness > 230 or brightness < 50:
+                score -= 40
+            if saturation > 150:
+                score -= 50
+
+        # ── 5. Avoid ugly colors ──
+        if r < 40 and g < 40 and b < 40:
+            score -= 100  # too dark
+        if r > 240 and g > 240 and b > 240:
+            score -= 80   # too white
+
+        return score
+
+
+    def _too_close(self, rgb, selected, threshold=45):
+        """Avoid similar colors (keeps palette clean & diverse)."""
+        for s in selected:
+            if self._cdist(rgb, s) < threshold:
+                return True
+        return False
+
+
+    def _rgb_to_hex(self, rgb):
+        return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+
+    def _fallback_palette(self):
+        """Fallback palette (soft editorial neutral tones)."""
+        return ["#d8cfc4", "#a8b5ad", "#c9a27e", "#6e8577", "#eee6da"]
+
+    def _cdist(self, c1, c2) -> float:
+        return sum((a - b) ** 2 for a, b in zip(c1, c2)) ** 0.5
+
+    # ── HTML rendering ────────────────────────────────────────────────────────
+
+    def _img_to_base64(self, url: str) -> str:
+        """Download image and return as base64 data URI."""
+        try:
+            params = UNSPLASH_PARAMS if "images.unsplash.com" in url else {}
+            resp = requests.get(url, params=params, timeout=20)
+            resp.raise_for_status()
+            # Resize to max 1600px to keep HTML size manageable
+            img = Image.open(BytesIO(resp.content)).convert("RGB")
+            w, h = img.size
+            scale = min(1600 / w, 1600 / h, 1.0)
+            if scale < 1.0:
+                img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+            buf = BytesIO()
+            img.save(buf, format="JPEG", quality=85)
+            b64 = base64.b64encode(buf.getvalue()).decode()
+            return f"data:image/jpeg;base64,{b64}"
+        except Exception as e:
+            print(f"  [render] Failed to embed image {url[:60]}: {e}")
+            return ""
+
+    def _render_html(
+        self,
+        key: str,
+        images: list[dict],
+        colors: list[str],
+        out_path: Path,
+    ):
+        html_path = HTML_DIR / f"template_{key}.html"
+        if not html_path.exists():
+            raise FileNotFoundError(
+                f"HTML template not found: {html_path}\n"
+                f"Place template HTML files in: {HTML_DIR}"
+            )
+
+        html = html_path.read_text(encoding="utf-8")
+
+        # Embed images as base64 — Playwright needs no network requests
+        slots = TEMPLATE_META[key]["image_slots"]
+        print(f"[MoodBoard] Embedding {len(slots)} images as base64...")
+        for i, slot in enumerate(slots):
+            if i < len(images):
+                url = images[i].get("image_url", "")
+                data_uri = self._img_to_base64(url) if url else ""
+            else:
+                data_uri = ""
+            html = html.replace(f"{{{{{slot}}}}}", data_uri)
+
+        # Fill color slots
+        for i in range(1, 6):
+            color = colors[i - 1] if i - 1 < len(colors) else "#cccccc"
+            html = html.replace(f"{{{{color_{i}}}}}", color)
+
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch()
+                # Images are base64-embedded — no network needed, load instantly
+                page = browser.new_page(viewport={"width": 2400, "height": 4000})
+                page.set_content(html, wait_until="domcontentloaded")
+                # Let layout settle
+                page.wait_for_timeout(800)
+                # Fit viewport to actual content height
+                height = page.evaluate("document.body.scrollHeight")
+                page.set_viewport_size({"width": 2400, "height": max(height, 100)})
+                page.wait_for_timeout(200)
+                page.screenshot(path=str(out_path), full_page=True)
+                browser.close()
+        except ImportError:
+            raise ImportError(
+                "Playwright not installed.\n"
+                "Run: pip install playwright && playwright install chromium"
+            )
+
+    # ── gpt-image-1.5 composite ───────────────────────────────────────────────
+
+    def _composite(
+        self,
+        pil_images: list,
+        template_png: Path,
+        prompt: str,
+    ) -> Path:
+        """
+        Use the rendered HTML template directly as the final output.
+
+        gpt-image-1 only supports fixed sizes (1024x1024, 1024x1792, 1792x1024)
+        which don't match our template aspect ratio (~2400x3100), causing cropping.
+        The rendered template from Playwright already looks great and is full-resolution.
+        """
+        import shutil
+        out = OUTPUT_DIR / f"moodboard_{int(time.time())}.png"
+        shutil.copy(template_png, out)
+        print(f"[MoodBoard] Using rendered template directly (skipping gpt-image-1 composite).")
+        return out
+
+    # ── Helpers ───────────────────────────────────────────────────────────────
+
+    def _resize_keep_aspect(self, img: Image.Image, max_px: int = 1024) -> Image.Image:
+        """Resize image so the longest side is max_px, preserving aspect ratio."""
+        w, h  = img.size
+        scale = min(max_px / w, max_px / h, 1.0)  # never upscale
+        if scale < 1.0:
+            img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+        return img
+
+    def _download(self, images: list[dict]) -> list:
+        result = []
+        for i, d in enumerate(images):
+            url = d.get("image_url", "")
+            if not url:
+                continue
+            try:
+                params = UNSPLASH_PARAMS if "images.unsplash.com" in url else {}
+                resp   = requests.get(url, params=params, timeout=20)
+                resp.raise_for_status()
+                pil = Image.open(BytesIO(resp.content))
+                result.append(pil)
+                print(f"  [{i+1}] {pil.size} OK")
+            except Exception as e:
+                print(f"  [{i+1}] Failed: {e}")
+        return result
+
+
+# ── CLI: render blank template PNGs ──────────────────────────────────────────
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--render-templates", action="store_true",
+                        help="Render HTML templates to PNG with placeholders (run once)")
+    args = parser.parse_args()
+
+    if args.render_templates:
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            print("Run: pip install playwright && playwright install chromium")
+            exit(1)
+
+        TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+        placeholder = (
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ"
+            "AAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII="
+        )
+        neutral = ["#d4c5b5", "#9fb0a8", "#c8a882", "#6b8275", "#e8ddd0"]
+
+        for key in ["B", "D", "E"]:
+            html_path = HTML_DIR / f"template_{key}.html"
+            if not html_path.exists():
+                print(f"  Missing: {html_path}")
+                continue
+            html = html_path.read_text(encoding="utf-8")
+            for slot in TEMPLATE_META[key]["image_slots"]:
+                html = html.replace(f"{{{{{slot}}}}}", placeholder)
+            for i in range(1, 6):
+                html = html.replace(f"{{{{color_{i}}}}}", neutral[i - 1])
+
+            out = TEMPLATE_DIR / f"template_{key}_blank.png"
+            with sync_playwright() as p:
+                browser = p.chromium.launch()
+                page    = browser.new_page(viewport={"width": 2400, "height": 3200})
+                page.set_content(html, wait_until="domcontentloaded")
+                page.screenshot(path=str(out), full_page=False)
+                browser.close()
+            print(f"  Rendered → {out}")
