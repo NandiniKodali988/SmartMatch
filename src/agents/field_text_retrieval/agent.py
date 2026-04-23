@@ -99,41 +99,51 @@ class FieldTextRetrievalAgent:
         self,
         grounding_output: dict,
         siglip_agent,                  # SiglipImageRetrievalAgent instance
+        exclude_ids: set | None = None,  # photo_ids to skip (e.g. already liked)
+        n: int | None = None,            # override top_k for this call
     ) -> list[dict]:
         """
         Full-dataset hybrid retrieval.
- 
+
         Computes SigLIP scores and text scores over ALL records independently,
         then merges them before ranking — so both methods compete on equal footing.
- 
+
             final_score = SIGLIP_WEIGHT * siglip_score + TEXT_WEIGHT * text_score
- 
+
         Args:
             grounding_output : dict from QwenVisualGroundingAgent
             siglip_agent     : initialized SiglipImageRetrievalAgent
- 
+            exclude_ids      : set of photo_ids to exclude from results (e.g. liked images)
+            n                : number of results to return (default: self.top_k)
+
         Returns:
             top-k result dicts with siglip_score, text_score, and final score
         """
+        exclude = set(exclude_ids) if exclude_ids else set()
+        k       = n if n is not None else self.top_k
+
         # Score all N records with both methods independently
-        siglip_scores            = siglip_agent.retrieve_all_scores(grounding_output)  # (N,)
-        text_scores, field_matrix = self._score_all(grounding_output)                  # (N,)
- 
+        siglip_scores             = siglip_agent.retrieve_all_scores(grounding_output)  # (N,)
+        text_scores, field_matrix = self._score_all(grounding_output)                   # (N,)
+
         # Weighted merge over full dataset
-        final_scores = SIGLIP_WEIGHT * siglip_scores + TEXT_WEIGHT * text_scores       # (N,)
- 
-        ranked = np.argsort(final_scores)[::-1][:self.top_k]
- 
+        final_scores = SIGLIP_WEIGHT * siglip_scores + TEXT_WEIGHT * text_scores        # (N,)
+
+        # Rank all, then filter excluded ids until we have k results
+        ranked_all = np.argsort(final_scores)[::-1]
         results = []
-        for idx in ranked:
+        for idx in ranked_all:
+            if len(results) >= k:
+                break
             row      = self.dataset[idx]
             photo_id = str(row.get("photo_id", f"idx_{idx}"))
-            grounding = row.get("grounding_output", {})
- 
+            if photo_id in exclude:
+                continue
+            grounding_row = row.get("grounding_output", {})
             results.append({
                 "photo_id":     photo_id,
                 "image_url":    self.url_lookup.get(photo_id, ""),
-                "caption":      grounding.get("visual_description", ""),
+                "caption":      grounding_row.get("visual_description", ""),
                 "score":        float(final_scores[idx]),
                 "siglip_score": float(siglip_scores[idx]),
                 "text_score":   float(text_scores[idx]),
@@ -143,7 +153,7 @@ class FieldTextRetrievalAgent:
                     for field in FIELD_WEIGHTS
                 },
             })
- 
+
         return results
  
     # ── Internal ──────────────────────────────────────────────────────────────

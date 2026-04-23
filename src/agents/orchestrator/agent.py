@@ -263,6 +263,8 @@ class OrchestratorAgent:
                 siglip_agent=self._siglip(),
             )
             state.step_timings["generation_gap"] = round(time.time() - t, 3)
+            for img in generated_raw:
+                img["verified"] = True
             pool = verified_raw + generated_raw
         else:
             pool = verified_raw
@@ -271,7 +273,8 @@ class OrchestratorAgent:
 
         # Step 6: Coherence selection
         t = time.time()
-        coherent_raw = self._coherence().run(pool[:20], grounding_dict)
+        pool_sorted = sorted(pool, key=lambda x: (not x.get("verified", False), -x.get("score", 0)))
+        coherent_raw = self._coherence().run(pool_sorted[:20], grounding_dict)
         state.step_timings["coherence"] = round(time.time() - t, 3)
         self.logger.log_coherence(run_id, coherent_raw)
         self.logger.log_step_timing(run_id, "coherence", state.step_timings["coherence"])
