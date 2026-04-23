@@ -29,6 +29,7 @@ import anthropic
 from openai import OpenAI
 from PIL import Image as PILImage
 from dotenv import load_dotenv
+import concurrent.futures
 
 try:
     from prompts import (
@@ -52,7 +53,7 @@ load_dotenv()
 # ── Config ────────────────────────────────────────────────────────────────────
 DALLE_MODEL          = os.getenv("DALLE_MODEL",      "gpt-image-1.5")
 EDIT_MODEL           = os.getenv("EDIT_MODEL",       "gpt-image-1.5")
-DALLE_SIZE           = os.getenv("DALLE_SIZE",       "1024x1792" )
+DALLE_SIZE           = os.getenv("DALLE_SIZE",       "1024x1024")
 DALLE_QUALITY        = os.getenv("DALLE_QUALITY",    "standard")
 CLAUDE_MODEL         = os.getenv("GROUNDING_MODEL",  "claude-haiku-4-5-20251001")
 SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD", "0.25"))
@@ -276,6 +277,79 @@ class GenerationAgent:
             print(f"[Agent 4] Download failed: {e}")
             return None
     
+    def _generate_diverse_prompts(
+        self,
+        grounding_output: dict,
+        user_text: str,
+        n: int,
+    ) -> list[str]:
+        """
+        Ask Claude to generate n visually distinct image descriptions
+        for the same query, each from a different angle.
+
+        Diversity axes enforced in the prompt:
+          - Subject type: person / environment / object / abstract
+          - Scale: wide / medium / close-up / macro
+          - Emotional register: literal / symbolic / metaphorical
+          - Composition: centered / asymmetric / overhead / silhouette
+        """
+        mood    = grounding_output.get("mood",          "").strip()
+        style   = grounding_output.get("style",         "").strip()
+        palette = grounding_output.get("color_palette", "").strip()
+        scene   = grounding_output.get("scene",         "").strip()
+
+        system = (
+            "You are a creative director writing image generation prompts. "
+            "Your prompts must be visually specific, photorealistic, and maximally diverse from each other. "
+            "Each prompt should feel like a completely different photograph."
+        )
+        user = (
+            f"Generate {n} visually DISTINCT image prompts for this mood board:\n"
+            f"Query: {user_text}\n"
+            f"Mood: {mood}\n"
+            f"Scene: {scene}\n"
+            f"Style: {style}\n"
+            f"Color palette: {palette}\n\n"
+            f"Requirements:\n"
+            f"- Each prompt MUST have a different subject type: "
+            f"cycle through (person, interior space, outdoor environment, "
+            f"still life/objects, abstract texture, urban architecture, "
+            f"nature detail, silhouette, aerial/overhead)\n"
+            f"- Each prompt MUST have a different scale: "
+            f"(extreme close-up, close-up, medium, wide, aerial)\n"
+            f"- No two prompts should describe the same scene or composition\n"
+            f"- Every prompt must be one sentence, specific and visual\n\n"
+            f"Return ONLY a valid JSON array of {n} strings. No explanation, no markdown.\n"
+            f'Example format: ["prompt 1", "prompt 2", ...]'
+        )
+
+        try:
+            resp = self.claude.messages.create(
+                model=CLAUDE_MODEL,
+                max_tokens=1000,
+                system=system,
+                messages=[{"role": "user", "content": user}],
+            )
+            import json as _json
+            raw = resp.content[0].text.strip()
+            if raw.startswith("```"):
+                raw = raw.split("```", 2)[1]
+                if raw.startswith("json"):
+                    raw = raw[4:]
+            prompts = _json.loads(raw.strip())
+            if isinstance(prompts, list) and len(prompts) == n:
+                # Append style + palette to each for consistency
+                suffix = ""
+                if style:   suffix += f" {style} photography style."
+                if palette: suffix += f" Color palette: {palette}."
+                return [p.rstrip(".") + suffix for p in prompts]
+        except Exception as e:
+            print(f"[Agent 4] Diverse prompt generation failed: {e} — using base prompt.")
+
+        # Fallback: use base prompt for all
+        base = self._build_generation_prompt(grounding_output)
+        return [base] * n
+
     def _run_generation(
         self,
         grounding_output: dict,
@@ -285,46 +359,83 @@ class GenerationAgent:
     ) -> list[dict]:
         """
         Generate n images using DALL·E 3.
-        Prompt is built from the full grounding output; each image gets a
-        different style variant to ensure visual diversity.
-        Score is computed as text-text cosine similarity via SigLIP encoder.
+        Step 1: Claude generates n diverse prompts (different scale/composition/subject).
+        Step 2: API calls run concurrently (max 3 threads) — only network I/O.
+        Step 3: Save + score back in main thread (siglip is not thread-safe).
+        Step 4: Retry with _refine_prompt if score < 0.15.
         """
-        base_prompt = self._build_generation_prompt(grounding_output)
+        import uuid
         print(f"[Agent 4] Generation path — {n} image(s).")
-        print(f"[Agent 4] Base prompt: {base_prompt[:120]}...")
+        print(f"[Agent 4] Generating {n} diverse prompts with Claude...")
+        diverse_prompts = self._generate_diverse_prompts(grounding_output, user_text, n)
+
+        prompts = [
+            f"{diverse_prompts[i]} {STYLE_VARIANTS[i % len(STYLE_VARIANTS)]}"
+            for i in range(n)
+        ]
+
+        # ── Step 2: parallel DALL·E API calls ────────────────────────────────
+        def call_one(args):
+            i, prompt = args
+            print(f"[Agent 4] Generating image {i+1}/{n}...")
+            url = self._call_dalle(prompt)
+            return (i, prompt, url)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            raw = list(executor.map(call_one, enumerate(prompts)))
+
+        # ── Step 3: save + score in main thread ──────────────────────────────
+        save_dir = Path("outputs/generated")
+        save_dir.mkdir(parents=True, exist_ok=True)
 
         results = []
-        for i in range(1, n + 1):
-            variant = STYLE_VARIANTS[(i - 1) % len(STYLE_VARIANTS)]
-            prompt  = f"{base_prompt} {variant}"
-            print(f"[Agent 4] Generating image {i}/{n} (variant {i})...")
-            url = self._call_dalle(prompt)
-            if url:
-                ts       = int(time.time())
-                filename = f"generated_{ts}_{i}.png"
+        for i, prompt, url in raw:
+            if not url:
+                continue
 
-                # Save base64 or download URL
-                if url.startswith("data:image"):
-                    # gpt-image-1 returns base64 — save directly
-                    import base64
-                    save_dir = Path("outputs/generated")
-                    save_dir.mkdir(parents=True, exist_ok=True)
-                    b64_data = url.split(",", 1)[1]
-                    img_bytes = base64.b64decode(b64_data)
-                    local_path = str(save_dir / filename)
-                    with open(local_path, "wb") as f:
-                        f.write(img_bytes)
-                    print(f"[Agent 4] Saved → {local_path}")
-                else:
-                    local_path = self._download_image(url, filename)
+            filename   = f"generated_{uuid.uuid4().hex[:8]}_{i+1}.png"
+            base_prompt = diverse_prompts[i]
 
-                score = self._score(siglip_agent, grounding_output, base_prompt)
-                print(f"[Agent 4] Score={score:.4f} (text-text proxy)")
-                results.append(
-                    self._pack(f"generated_{ts}_{i}", url, base_prompt, score, "dalle3", local_path)
+            if url.startswith("data:image"):
+                b64_data  = url.split(",", 1)[1]
+                img_bytes = base64.b64decode(b64_data)
+                local_path = str(save_dir / filename)
+                with open(local_path, "wb") as f:
+                    f.write(img_bytes)
+                print(f"[Agent 4] Saved → {local_path}")
+            else:
+                local_path = self._download_image(url, filename)
+
+            score = self._score(siglip_agent, grounding_output, base_prompt)
+            print(f"[Agent 4] Image {i+1}/{n} score={score:.4f}")
+
+            # ── Step 4: retry once with refined prompt if score too low ───────
+            if score < 0.15 and siglip_agent is not None:
+                print(f"[Agent 4] Score too low — refining prompt with Claude...")
+                refined_prompt = self._refine_prompt(
+                    user_text=user_text,
+                    grounding_output=grounding_output,
+                    previous_prompt=prompt,
+                    previous_score=score,
                 )
-            if i < n:
-                time.sleep(RATE_LIMIT_SLEEP)
+                alt_url = self._call_dalle(refined_prompt)
+                if alt_url:
+                    alt_score = self._score(siglip_agent, grounding_output, refined_prompt)
+                    if alt_score > score:
+                        url, prompt, score = alt_url, refined_prompt, alt_score
+                        if url.startswith("data:image"):
+                            b64_data  = url.split(",", 1)[1]
+                            img_bytes = base64.b64decode(b64_data)
+                            with open(local_path, "wb") as f:
+                                f.write(img_bytes)
+                        print(f"[Agent 4] Retry improved score to {score:.4f}")
+
+            results.append(
+                self._pack(
+                    f"generated_{uuid.uuid4().hex[:8]}_{i+1}",
+                    url, base_prompt, score, "dalle3", local_path,
+                )
+            )
 
         print(f"[Agent 4] Generated {len(results)} image(s).")
         return results

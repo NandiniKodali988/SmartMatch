@@ -117,21 +117,50 @@ Write an improved prompt that better matches the visual description."""
 # Applied in _run_generation() so each of the N generated images looks distinct.
 
 STYLE_VARIANTS = [
-    # Variant 1: cinematic wide shot, realistic photography
+    # 1: cinematic wide shot
     (
         "Shot on a full-frame camera with a 35mm lens. Wide establishing shot. "
         "Natural ambient lighting. Realistic film grain, shallow depth of field. "
-        "Photorealistic, no AI artifacts."
+        "Photorealistic."
     ),
-    # Variant 2: intimate documentary style
+    # 2: intimate documentary
     (
         "Documentary photography style. Medium shot from eye level. "
-        "Diffused natural light, muted desaturated tones. "
-        "Candid, unposed feel. Shot on a 50mm lens with natural exposure."
+        "Diffused natural light, muted desaturated tones. Candid, unposed feel."
     ),
-    # Variant 3: high-contrast expressive
+    # 3: high-contrast expressive
     (
         "High-contrast photography with dramatic shadows and a single strong key light. "
-        "Bold silhouette composition. Grainy, high-contrast, timeless street photography feel."
+        "Bold silhouette composition. Timeless street photography feel."
+    ),
+    # 4: overhead flat-lay
+    (
+        "Overhead flat-lay composition, top-down perspective. "
+        "Clean even lighting, graphic and minimal layout. No motion blur."
+    ),
+    # 5: macro texture
+    (
+        "Extreme macro shot of texture or surface detail. "
+        "Abstract composition, razor-sharp focus on material quality."
+    ),
+    # 6: monochrome editorial
+    (
+        "Black and white photography. Rich tonal contrast, deep shadows. "
+        "Timeless, editorial feel. Shot on medium format."
+    ),
+    # 7: golden hour outdoor
+    (
+        "Natural outdoor scene, golden hour light. Warm tones, long shadows. "
+        "Wide angle, landscape photography style. No artificial lighting."
+    ),
+    # 8: urban architectural
+    (
+        "Urban architectural photography. Strong geometric lines and perspective. "
+        "Cool tones, sharp focus throughout the frame."
+    ),
+    # 9: motion / long exposure
+    (
+        "Long exposure or motion blur suggesting movement and energy. "
+        "Dynamic diagonal composition, sense of time passing."
     ),
 ]

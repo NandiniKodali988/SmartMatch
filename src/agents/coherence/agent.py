@@ -44,6 +44,12 @@ When selecting, consider:
 - Visual variety: avoid picking images that are essentially the same scene twice
 - Narrative flow: the set should feel like it belongs together, like pages from the same book
 
+CRITICAL: Visual diversity is required.
+- The 9 selected images MUST vary in composition, scale, and perspective
+- Do NOT select more than 2 images with nearly identical compositions
+- Prefer a mix of: wide shots, close-ups, human presence, no people, different color registers
+- A board with 9 similar images scores 1/5 on coherence regardless of relevance
+
 Respond ONLY with valid JSON in this exact format:
 {
   "selected_ids": ["photo_id_1", "photo_id_2", ...],
