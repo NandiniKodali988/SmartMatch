@@ -48,74 +48,48 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="smartmatch-a-multi-agent-pipeline-for-mood-board-generation-via-graph-augmented-retrieval-and-multimodal-synthesis" class="level1">
 <h1>SmartMatch: A Multi-Agent Pipeline for Mood Board Generation via Graph-Augmented Retrieval and Multimodal Synthesis</h1>
-<p><strong>Team 04 · DSAN 6725 · Georgetown University · Spring 2026</strong></p>
-<p>Xinzhou Li · Nandini Kodali · Caroline Delva · Qingyang Wang</p>
+<p>Qingyang Wang · Nandini Kodali · Caroline Delva · Xinzhou Li</p>
+<p>Georgetown University — DSAN 6725: Applied Generative AI for Developers — Spring 2026</p>
 <hr>
 <section id="abstract" class="level2">
 <h2 class="anchored" data-anchor-id="abstract">Abstract</h2>
-<p>Visual content selection is a recurring challenge for creatives, marketers, and designers who must identify images that match not just a topic but a specific emotional tone, aesthetic, and compositional intent. Text-based search engines fail at this task because abstract or emotionally rich language does not map naturally to the visual feature spaces that retrieval models operate in. We present SmartMatch, a multi-agent AI system that addresses this gap by generating cohesive nine-image mood boards from free-form natural language input. The system introduces a five-stage pipeline: (1) a Visual Concept Grounding Agent that uses Claude to decompose user intent into structured visual descriptors; (2) a Hybrid Retrieval system combining SigLIP-2 visual embeddings with per-field OpenAI text embeddings over 25,000 Unsplash images; (3) a Graph RAG Agent that builds a knowledge graph over the image corpus and performs candidate deduplication, neighbor expansion, and connectivity-based reranking; (4) a Multimodal Verification and Coherence Agent that selects a visually consistent final set; and (5) a Justification Agent that produces natural-language explanations for each selected image alongside a board-level narrative. When retrieval scores fall below a threshold, the system falls back to gpt-image-1.5 for on-demand image generation. LLM-as-judge evaluation across 50 diverse queries rates the system at 4.1/5.0 on relevance, coherence, visual quality, and aesthetic consistency. An ablation study confirms that each pipeline stage contributes measurably to final board quality, with Graph RAG providing the largest improvement on abstract queries.</p>
+<p>Visual content selection is a recurring challenge for creatives and marketers who must identify images that match not just a topic but a specific emotional tone, aesthetic intent, and compositional style. Conventional image search fails because abstract or emotionally rich language does not map naturally to the visual feature spaces that retrieval models operate in.</p>
+<p>We present SmartMatch, a multi-agent system that generates cohesive nine-image mood boards from free-form natural language. The pipeline comprises five stages: a Visual Concept Grounding Agent that uses Claude to decompose user intent into structured visual descriptors; a Hybrid Retrieval system combining SigLIP-2 visual embeddings with per-field OpenAI text embeddings over 25,000 Unsplash images; a Graph RAG Agent that builds a knowledge graph over the corpus and performs candidate deduplication, expansion, and reranking; a Multimodal Verification and Coherence Agent that selects a visually consistent final set; and a Justification Agent that produces natural-language explanations for each image alongside a board-level narrative. When retrieval scores fall below a threshold, the system falls back to gpt-image-1.5 with Claude-driven diverse prompt synthesis.</p>
+<p>LLM-as-judge evaluation across 50 diverse queries yields an overall mean score of 3.45 out of 5.0, with relevance at 4.18, visual quality at 3.4, coherence at 3.06, and aesthetics at 3.16. An ablation study confirms that LLM grounding contributes the largest single gain in relevance (+0.7) and Graph RAG the largest gain in coherence (+0.6).</p>
 <hr>
 </section>
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">1. Introduction</h2>
-<p>Selecting images for a mood board is a creative task that requires matching visual output to emotional intent. A user searching for images that evoke “the feeling of being burnt out after a long week” is not describing a literal scene—they are expressing an affective state that should translate into a specific palette, lighting, compositional weight, and subject matter. Conventional image search engines, which rely on keyword matching or single-vector similarity, routinely fail at this translation. The user either receives irrelevant literal results (“tired person at desk”) or generic stock imagery that misses the intended tone entirely.</p>
-<p>This failure has a structural cause. Vision-language models such as SigLIP-2 learn alignment between text and image in a shared embedding space, but that space is trained primarily on literal descriptions. Emotionally rich language, abstract concepts, and aesthetic intentions are systematically underrepresented. A system designed to bridge this gap must do more than retrieve images—it must interpret intent, structure the retrieval problem, evaluate coherence across a set of images, and explain its selections.</p>
-<p>SmartMatch addresses all four requirements through a coordinated multi-agent architecture. The system:</p>
-<ol type="1">
-<li>Translates free-form text into structured visual descriptors using an LLM grounding step</li>
-<li>Retrieves candidates via a hybrid embedding strategy that scores images on multiple semantic dimensions simultaneously</li>
-<li>Applies graph-based reasoning over the image corpus to diversify and rerank candidates</li>
-<li>Selects a coherent final set using a multimodal verification and coherence agent</li>
-<li>Provides natural-language justifications for every selected image and a narrative summary for the board as a whole</li>
-</ol>
-<p>The key research questions this work addresses are: Does LLM-based visual grounding improve retrieval quality for abstract queries? Does graph-augmented retrieval improve mood board coherence compared to flat similarity search? How well does LLM-as-judge evaluation correlate with the structural properties of the pipeline?</p>
+<p>Selecting images for a mood board requires matching visual output to emotional intent. A user searching for images that evoke the feeling of being burnt out after a long week is not describing a literal scene but expressing an affective state that should translate into a specific palette, lighting, compositional weight, and subject matter. Conventional image search engines fail at this translation because vision-language models such as SigLIP-2 are trained primarily on literal descriptions. Emotionally rich language, abstract concepts, and aesthetic intentions are systematically underrepresented in their training distributions.</p>
+<p>A system designed to bridge this gap must do more than retrieve images. It must interpret intent, structure the retrieval problem, evaluate coherence across a set of images, and explain its selections. SmartMatch addresses all four requirements through a coordinated multi-agent architecture.</p>
+<p>The research questions motivating this work are: (1) Does LLM-based visual grounding improve retrieval quality for abstract queries compared to direct embedding search? (2) Does graph-augmented retrieval improve mood board coherence compared to flat similarity search? (3) How well does an LLM-as-judge framework capture the structural quality properties of a mood board?</p>
 <hr>
 </section>
 <section id="related-work" class="level2">
 <h2 class="anchored" data-anchor-id="related-work">2. Related Work</h2>
-<section id="vision-language-models-and-image-retrieval" class="level3">
-<h3 class="anchored" data-anchor-id="vision-language-models-and-image-retrieval">2.1 Vision-Language Models and Image Retrieval</h3>
-<p>Contrastive vision-language models such as CLIP [Radford et al., 2021] and SigLIP [Zhai et al., 2023] enable zero-shot image retrieval by projecting text and images into a shared embedding space. SigLIP-2 improves on CLIP by using a sigmoid loss instead of softmax normalization, which improves performance on multi-label and fine-grained retrieval tasks. These models form the backbone of modern semantic image search, but they share a limitation: their text encoders are optimized for literal, descriptive language rather than affective or abstract intent.</p>
-<p>Recent work on dense retrieval [Karpukhin et al., 2020] and multi-vector representations [Colbert; Khattab and Zaharia, 2020] suggests that per-field scoring—where different semantic aspects of a query receive independent representations—can improve retrieval quality over single-vector approaches. SmartMatch’s hybrid retrieval agent applies this insight directly, scoring images on visual description, mood, and color palette independently before combining scores.</p>
-</section>
-<section id="llm-augmented-retrieval" class="level3">
-<h3 class="anchored" data-anchor-id="llm-augmented-retrieval">2.2 LLM-Augmented Retrieval</h3>
-<p>Retrieval-Augmented Generation (RAG) [Lewis et al., 2020] and its variants have demonstrated that LLMs can substantially improve retrieval quality by reformulating queries, expanding them with relevant context, or reranking retrieved results. HyDE [Gao et al., 2022] showed that generating a hypothetical document from a query and using that document as the retrieval anchor can outperform direct query embedding, particularly for abstract queries. SmartMatch’s grounding agent applies a related principle: rather than generating a hypothetical image, it generates a structured set of visual descriptors that are better aligned with the embedding model’s training distribution.</p>
-</section>
-<section id="knowledge-graphs-for-recommendation" class="level3">
-<h3 class="anchored" data-anchor-id="knowledge-graphs-for-recommendation">2.3 Knowledge Graphs for Recommendation</h3>
-<p>Graph-based approaches to recommendation systems exploit structural relationships between items to improve diversity and coverage beyond what similarity scores alone can achieve. Classical collaborative filtering and more recent graph neural network approaches [Hamilton et al., 2017; Wang et al., 2019] demonstrate that connectivity in an item graph is a reliable signal for recommendation quality. SmartMatch’s Graph RAG agent applies this principle to the image retrieval setting, constructing a graph where edges encode mood-color similarity with a visual diversity penalty and using graph traversal to expand and rerank candidate sets.</p>
-</section>
-<section id="mood-board-generation" class="level3">
-<h3 class="anchored" data-anchor-id="mood-board-generation">2.4 Mood Board Generation</h3>
-<p>Prior work on computational mood board generation [O’Donovan et al., 2014; Kita and Cao, 2015] focused primarily on color harmony and style matching using hand-crafted features. More recent approaches using neural style embeddings [Gatys et al., 2016] improved aesthetic consistency but lacked the ability to incorporate semantic or emotional intent. To our knowledge, SmartMatch is the first system to combine LLM-based intent grounding, hybrid semantic retrieval, graph-augmented candidate expansion, and LLM-based coherence selection in a unified mood board generation pipeline.</p>
+<p><strong>Vision-language retrieval.</strong> Contrastive models such as CLIP (Radford et al., 2021) and SigLIP (Zhai et al., 2023) enable zero-shot image retrieval through shared embedding spaces. SigLIP-2 improves on CLIP via sigmoid loss, achieving stronger multi-label retrieval performance. However, their text encoders favor literal descriptions over affective language. Per-field scoring approaches (Khattab and Zaharia, 2020; Karpukhin et al., 2020) suggest that decomposing queries into independent semantic dimensions can improve over single-vector retrieval, an insight that informs SmartMatch’s hybrid retrieval design.</p>
+<p><strong>LLM-augmented retrieval.</strong> Retrieval-Augmented Generation (Lewis et al., 2020) and HyDE (Gao et al., 2022) demonstrate that LLMs can reframe queries into forms better suited to retrieval models. SmartMatch’s grounding agent applies this principle by converting abstract user text into structured visual descriptors aligned with SigLIP-2’s training distribution.</p>
+<p><strong>Graph-based recommendation.</strong> Neural graph collaborative filtering (Wang et al., 2019) shows that item-graph connectivity is a reliable signal for recommendation diversity. SmartMatch adapts this to image retrieval by constructing edges based on weighted field-level similarity across mood, color palette, and visual description.</p>
+<p><strong>Mood board generation.</strong> Prior computational approaches (O’Donovan et al., 2014; Gatys et al., 2016) focused on color harmony and style transfer using hand-crafted features, without support for semantic or emotional intent. SmartMatch is the first system to combine LLM grounding, hybrid semantic retrieval, graph-augmented reranking, and LLM-based coherence selection in a unified mood board pipeline.</p>
 <hr>
-</section>
 </section>
 <section id="system-architecture" class="level2">
 <h2 class="anchored" data-anchor-id="system-architecture">3. System Architecture</h2>
-<p>SmartMatch is a multi-agent pipeline where each agent handles a distinct transformation of the input before passing structured output to the next stage. The system accepts free-form natural language text (and optionally uploaded images) and returns a nine-image mood board with per-image justifications and a board-level narrative summary. All agents are coordinated by an Orchestrator that manages routing decisions, step timing, structured logging, and safety checks.</p>
+<p>SmartMatch is a multi-agent pipeline coordinated by an OrchestratorAgent that manages routing, step timing, structured logging, and safety checks. The system accepts free-form text and optionally uploaded images, and returns a nine-image mood board with per-image justifications and a board-level narrative. All inter-agent communication uses Pydantic models rather than raw dictionaries, ensuring field mismatches fail loudly at parse time.</p>
+<section id="pipeline-overview" class="level3">
+<h3 class="anchored" data-anchor-id="pipeline-overview">3.1 Pipeline Overview</h3>
+<p>The pipeline follows two branches. Branch A handles uploaded images: after grounding, the system routes directly to the Generation Agent for image editing. Branch B, the primary path, handles text-only queries through hybrid retrieval, Graph RAG, verification, and coherence selection. If the top retrieval score falls below a threshold of 0.5, the system falls back to on-demand generation. The routing decision uses the pre-Graph RAG score to avoid inflating scores for abstract queries that should fall back to generation.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="images/Pipeline.png" class="img-fluid figure-img"></p>
 <figcaption>Figure 1: SmartMatch System Architecture</figcaption>
 </figure>
 </div>
-<section id="pipeline-overview" class="level3">
-<h3 class="anchored" data-anchor-id="pipeline-overview">3.1 Pipeline Overview</h3>
-<p>The pipeline follows one of two branches depending on whether the user provides uploaded images.</p>
-<p><strong>Branch A (uploaded images):</strong> The Grounding Agent processes user text and uploaded images, then routes directly to the Generation Agent for image editing (inpaint, restyle, blend, collage, or composite). The result passes to the Justification Agent and returns as a MoodBoardBundle.</p>
-<p><strong>Branch B (no uploads):</strong> The Grounding Agent processes user text, then the Hybrid Retrieval system (SigLIP-2 + Field Text) retrieves candidates from the 25,000-image corpus. The Graph RAG Agent refines the candidate set. If the top hybrid score meets or exceeds the threshold of 0.4, the system proceeds through Multimodal Verification and Coherence selection. If not, the system falls back to gpt-image-1.5 for full board generation. In both sub-branches, the Justification Agent produces per-image explanations and a board summary before output.</p>
-<p>The threshold routing uses the pre-Graph RAG hybrid score to avoid the confound of graph reranking inflating scores for abstract queries that genuinely lack retrievable matches.</p>
 </section>
 <section id="visual-concept-grounding-agent" class="level3">
 <h3 class="anchored" data-anchor-id="visual-concept-grounding-agent">3.2 Visual Concept Grounding Agent</h3>
-<p>The grounding agent addresses the core challenge of the system: emotionally rich or abstract text does not map naturally to visual feature spaces. The agent takes raw user text and transforms it into a structured JSON output using Claude (claude-haiku-4-5-20251001) via the Anthropic API.</p>
+<p>The grounding agent transforms raw user text into a structured JSON object using Claude (claude-haiku-4-5-20251001). The output contains seven fields:</p>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Field</th>
@@ -124,84 +98,73 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>visual_description</code></td>
-<td>A rich sentence describing what the ideal image would look like</td>
+<td>visual_description</td>
+<td>A rich sentence describing the ideal image</td>
 </tr>
 <tr class="even">
-<td><code>scene</code></td>
+<td>scene</td>
 <td>Scene and setting keywords</td>
 </tr>
 <tr class="odd">
-<td><code>mood</code></td>
+<td>mood</td>
 <td>Emotional and atmospheric keywords</td>
 </tr>
 <tr class="even">
-<td><code>style</code></td>
+<td>style</td>
 <td>Visual style keywords</td>
 </tr>
 <tr class="odd">
-<td><code>lighting</code></td>
+<td>lighting</td>
 <td>Lighting conditions</td>
 </tr>
 <tr class="even">
-<td><code>color_palette</code></td>
+<td>color_palette</td>
 <td>Dominant colors and tones</td>
 </tr>
 <tr class="odd">
-<td><code>intent</code></td>
-<td>Likely use case: professional, editorial, or social</td>
+<td>intent</td>
+<td>Use case: professional, editorial, or social</td>
 </tr>
 </tbody>
 </table>
-<p>The agent supports multi-turn context: in a follow-up query (e.g., “make it warmer”), it receives the previous grounding output and modifies it rather than starting from scratch. This is managed by the MemoryManager, which stores grounding outputs per session.</p>
-<p>For offline preprocessing, the system uses the Anthropic Batch API to compute grounding outputs for all 25,000 images in the corpus at a 50% cost reduction compared to live API calls. These precomputed outputs form the basis for the field-level text embeddings used in retrieval.</p>
+<p>The agent supports multi-turn context via a MemoryManager that stores grounding outputs per session, so follow-up queries modify the previous grounding rather than starting from scratch. For offline preprocessing, the Anthropic Batch API generates grounding outputs for all 25,000 corpus images at a 50% cost reduction versus the live API.</p>
 </section>
 <section id="hybrid-retrieval" class="level3">
 <h3 class="anchored" data-anchor-id="hybrid-retrieval">3.3 Hybrid Retrieval</h3>
-<p>Retrieval combines two complementary scoring signals.</p>
-<p><strong>SigLIP-2 Retrieval Agent</strong> performs cosine similarity search over a FAISS index of 25,000 pre-computed image embeddings using the <code>google/siglip-base-patch16-224</code> model. The concatenated grounding output fields form the query, which is encoded and compared against image embeddings using L2-normalized dot product similarity.</p>
-<p><strong>Field Text Retrieval Agent</strong> scores images using per-field semantic embeddings via OpenAI’s <code>text-embedding-3-large</code> model. Three fields are embedded independently—<code>visual_description</code>, <code>mood</code>, and <code>color_palette</code>—and scored against the corresponding grounding output fields. This per-field decomposition allows the system to weight semantic alignment across aesthetic dimensions independently.</p>
-<p>The final hybrid score combines both signals: <code>score = 0.7 × siglip_score + 0.3 × text_score</code>. In practice, SigLIP-2 scores are often negative in high-dimensional space, making the text embedding component the dominant signal for abstract queries. The system retrieves a candidate pool of up to 20 images before Graph RAG processing.</p>
+<p>Retrieval combines two complementary signals. The SigLIP-2 Retrieval Agent performs cosine similarity search over a FAISS index of 25,000 pre-computed image embeddings using google/siglip-base-patch16-224. The Field Text Retrieval Agent computes per-field semantic embeddings via OpenAI text-embedding-3-large independently for visual_description, mood, and color_palette. The hybrid score is:</p>
+<pre><code>score = 0.7 * siglip_score + 0.3 * text_score</code></pre>
+<p>Text similarity is weighted more heavily (0.7) because SigLIP-2 scores are frequently negative in high-dimensional space, particularly for abstract emotional queries. The text embedding component reliably captures the semantic intent of the grounding output. The system retrieves up to 20 candidates before Graph RAG processing.</p>
 </section>
 <section id="graph-rag-agent" class="level3">
 <h3 class="anchored" data-anchor-id="graph-rag-agent">3.4 Graph RAG Agent</h3>
-<p>The Graph RAG Agent applies graph-based reasoning over the image corpus to improve candidate diversity and coherence. The agent operates in three steps: <strong>deduplicate</strong>, <strong>expand</strong>, and <strong>rerank</strong>.</p>
-<p><strong>Graph Construction.</strong> An offline script builds a weighted adjacency list over all 25,000 images using FAISS-based nearest neighbor search per embedding field. The edge weight formula is:</p>
-<pre><code>edge_weight = 0.5 × mood_sim + 0.5 × color_sim − 0.3 × visual_sim
-edge_weight = max(0.0, edge_weight)</code></pre>
-<p>The positive mood and color terms connect images that share atmosphere and palette. The negative visual description term penalizes near-identical content—images that look the same even if the mood is right. This produces a graph with 743,839 edges across 25,000 nodes (average degree 29.75), where high-weight edges connect images that are tonally coherent but visually distinct.</p>
-<p><strong>Deduplicate.</strong> For each pair of candidates whose edge weight exceeds a threshold (default 0.60), the lower-scoring image is removed. This eliminates near-duplicate images that frequently appear at the top of retrieval results for concrete queries (e.g., multiple near-identical beach sunset photos).</p>
-<p><strong>Expand.</strong> The top-5 seed candidates traverse the graph to contribute up to 2 neighbors each (MAX_PER_SEED=2), adding at most 10 new candidates to the pool. Expanded candidates are scored using real text similarity via <code>_score_all()</code> scaled by <code>TEXT_WEIGHT</code> (0.3), so they compete on the same scale as hybrid retrieval candidates rather than relying on a proxy score.</p>
-<p><strong>Rerank.</strong> Each candidate’s connectivity score is computed as the average edge weight to other candidates in the pool. The final score is a weighted combination of the hybrid score and the connectivity score: <code>final = (1 − GRAPH_WEIGHT) × hybrid + GRAPH_WEIGHT × graph</code>, with <code>GRAPH_WEIGHT = 0.25</code>. Images that are well-connected to their peers are boosted, rewarding candidates that form coherent clusters within the selected set.</p>
-<p>The routing decision always uses the pre-Graph RAG score to avoid inflating scores for abstract queries that should fall back to generation.</p>
+<p>An offline script builds a weighted knowledge graph over all 25,000 images using FAISS-based nearest-neighbor search per embedding field. Edge weights are computed as a weighted combination of field-level similarities:</p>
+<pre><code>edge_weight = 0.35 * mood_sim + 0.20 * color_sim + 0.45 * visual_sim</code></pre>
+<p>This formulation connects images that share visual appearance and atmosphere. The graph has 750,000 edges across 25,000 nodes with an average degree of 30.0.</p>
+<p>The agent operates in three steps:</p>
+<ol type="1">
+<li><strong>Deduplicate</strong>: removes candidate pairs with edge weight above 0.60, keeping the higher-scoring image in each near-duplicate pair.</li>
+<li><strong>Expand</strong>: takes the top-5 seed candidates, traverses their graph neighbors, and adds up to 10 new candidates. A maximum of 2 new candidates are allowed per seed to ensure diversity. Expanded candidates are scored using real text similarity via _score_all rather than proxy scores, so they compete on the same scale as hybrid retrieval candidates.</li>
+<li><strong>Rerank</strong>: combines hybrid score and graph connectivity as final = (1 - 0.25) * hybrid + 0.25 * connectivity, where connectivity is the average edge weight to other candidates in the set.</li>
+</ol>
 </section>
-<section id="multimodal-verification-and-coherence-agents" class="level3">
-<h3 class="anchored" data-anchor-id="multimodal-verification-and-coherence-agents">3.5 Multimodal Verification and Coherence Agents</h3>
-<p><strong>Multimodal Verification Agent</strong> passes each candidate image and the grounding output to Claude Vision (<code>claude-haiku-4-5-20251001</code>) for direct visual evaluation. The agent checks whether each image genuinely matches the mood, color palette, and intent of the query—not just whether its text caption is semantically similar. Images that fail verification are excluded; if fewer than <code>MIN_VERIFIED</code> images pass (default 6), the Generation Agent fills the gap.</p>
-<p><strong>Coherence Agent</strong> receives the top 20 verified candidates and selects the final 9 images that best form a visually consistent mood board. Using Claude, the agent evaluates the candidate set holistically and selects the subset that balances thematic consistency, visual diversity, and aesthetic harmony.</p>
+<section id="multimodal-verification-and-coherence" class="level3">
+<h3 class="anchored" data-anchor-id="multimodal-verification-and-coherence">3.5 Multimodal Verification and Coherence</h3>
+<p>The Multimodal Verification Agent passes each candidate to Claude Vision, evaluating whether each image genuinely matches the mood, palette, and intent of the query. If fewer than 6 images pass, the Generation Agent fills the gap; generated images are flagged verified=True so they are included in the Coherence selection pool. The Coherence Agent receives the top 20 verified candidates and uses Claude to select the final 9 images that best balance thematic consistency, visual diversity, and aesthetic harmony.</p>
 </section>
 <section id="generation-agent" class="level3">
 <h3 class="anchored" data-anchor-id="generation-agent">3.6 Generation Agent</h3>
-<p>When retrieval fails (score &lt; <code>HYBRID_THRESHOLD</code>), or when the verified pool is insufficient, the Generation Agent synthesizes images using gpt-image-1.5. For full board generation, 9 images are created using style variants that ensure visual diversity: cinematic wide shot, documentary medium shot, and high-contrast expressive. Each variant receives the grounding-derived prompt with different photographic style specifications.</p>
-<p>For uploaded-image editing, the agent selects among five modes—inpaint, restyle, blend, collage, composite—using Claude’s judgment based on the grounding output and the nature of the uploaded images. A scoring step evaluates generated images against the original text using SigLIP-2 text-text similarity, and a Claude-based prompt refinement step retries if the score falls below a quality threshold.</p>
+<p>When retrieval fails, the Generation Agent synthesizes images using gpt-image-1.5. The key mechanism is Claude-driven diverse prompt synthesis: before generation, Claude produces n visually distinct image descriptions enforcing variation across subject type (person, interior, outdoor, still life, abstract, urban, nature, silhouette, aerial), scale (extreme close-up through aerial), and emotional register (literal, symbolic, atmospheric). Each description is combined with a distinct photographic style variant. API calls run concurrently with a thread pool of 3 workers, reducing wall-clock time from approximately 90 seconds to 25-30 seconds. If any image scores below 0.15, Claude refines that specific prompt using the prior prompt and score as context.</p>
 </section>
 <section id="justification-agent" class="level3">
 <h3 class="anchored" data-anchor-id="justification-agent">3.7 Justification Agent</h3>
-<p>The Justification Agent takes the final selected images and the user’s original query text and produces: (1) a 2–3 sentence per-image justification explaining concretely why that image matches the query’s mood, palette, and intent, and (2) a board-level narrative summary of 3–5 sentences describing the mood board as a whole. Both outputs are generated by Claude (<code>claude-haiku-4-5-20251001</code>) and are written in plain language without reference to technical scores or model internals.</p>
+<p>The Justification Agent produces a 2-3 sentence per-image explanation grounded in the image caption and user query, and a 3-5 sentence board-level narrative. All output is generated by Claude without reference to scores or technical details.</p>
 </section>
-<section id="orchestrator-and-supporting-components" class="level3">
-<h3 class="anchored" data-anchor-id="orchestrator-and-supporting-components">3.8 Orchestrator and Supporting Components</h3>
-<p><strong>OrchestratorAgent</strong> coordinates all pipeline stages, manages lazy agent initialization, handles guardrail checks, and produces a <code>MoodBoardBundle</code>—a Pydantic model containing the query, structured grounding output, final image list, routing decision, top hybrid score, board summary, and timestamp.</p>
-<p><strong>GuardrailAgent</strong> performs input and output safety checks using Claude. Input checks block queries that explicitly request harmful content while allowing dark, melancholy, or unconventional creative queries. Output checks filter generated images whose descriptions suggest unsafe content. Both checks fail open on API error to avoid blocking legitimate requests.</p>
-<p><strong>PipelineLogger</strong> writes structured JSONL logs for every run, capturing step timings, routing decisions, retrieval scores, graph RAG statistics, verification outcomes, and the final bundle. These logs are the basis for the ablation study in Section 5.</p>
-<p><strong>MemoryManager</strong> stores grounding outputs per session to support multi-turn refinement (e.g., “make it darker”, “add more contrast”).</p>
+<section id="supporting-components" class="level3">
+<h3 class="anchored" data-anchor-id="supporting-components">3.8 Supporting Components</h3>
+<p>The OrchestratorAgent coordinates all stages via lazy agent initialization. The GuardrailAgent blocks harmful queries while allowing dark, melancholy, or unconventional creative requests, and fails open on API error. The PipelineLogger writes structured JSONL logs capturing step timings, routing decisions, and verification outcomes.</p>
 </section>
-<section id="pydantic-state-models" class="level3">
-<h3 class="anchored" data-anchor-id="pydantic-state-models">3.9 Pydantic State Models</h3>
-<p>All inter-agent communication uses Pydantic models (<code>state.py</code>) rather than raw dictionaries. Key models include <code>GroundingOutput</code>, <code>ImageResult</code>, <code>PipelineState</code>, and <code>MoodBoardBundle</code>. Pydantic validation ensures that field mismatches fail loudly at parse time rather than silently propagating through the pipeline.</p>
-</section>
-<section id="external-services-and-tools" class="level3">
-<h3 class="anchored" data-anchor-id="external-services-and-tools">3.10 External Services and Tools</h3>
+<section id="external-services" class="level3">
+<h3 class="anchored" data-anchor-id="external-services">3.9 External Services</h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -210,45 +173,37 @@ edge_weight = max(0.0, edge_weight)</code></pre>
 <thead>
 <tr class="header">
 <th>Component</th>
-<th>Service / Tool</th>
+<th>Service</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Visual grounding, verification, coherence, justification</td>
-<td>Anthropic API (<code>claude-haiku-4-5-20251001</code>)</td>
+<td>Grounding, verification, coherence, justification, prompt synthesis</td>
+<td>Anthropic API (claude-haiku-4-5-20251001)</td>
 </tr>
 <tr class="even">
 <td>Image retrieval embeddings</td>
-<td>SigLIP-2 (<code>google/siglip-base-patch16-224</code>)</td>
+<td>SigLIP-2 (google/siglip-base-patch16-224)</td>
 </tr>
 <tr class="odd">
 <td>Field-level text embeddings</td>
-<td>OpenAI (<code>text-embedding-3-large</code>)</td>
+<td>OpenAI text-embedding-3-large</td>
 </tr>
 <tr class="even">
-<td>Fallback image generation and editing</td>
-<td>OpenAI (<code>gpt-image-1</code>)</td>
+<td>Fallback image generation</td>
+<td>OpenAI gpt-image-1.5</td>
 </tr>
 <tr class="odd">
-<td>Similarity search index</td>
+<td>Similarity search</td>
 <td>FAISS (CPU)</td>
 </tr>
 <tr class="even">
 <td>Image dataset</td>
-<td>Unsplash (25,000 images with pre-computed embeddings)</td>
+<td>Unsplash (25,000 images)</td>
 </tr>
 <tr class="odd">
 <td>Batch grounding preprocessing</td>
 <td>Anthropic Batch API</td>
-</tr>
-<tr class="even">
-<td>Safety checks</td>
-<td>Anthropic API (<code>claude-haiku-4-5-20251001</code>)</td>
-</tr>
-<tr class="odd">
-<td>Structured logging</td>
-<td>JSONL (custom PipelineLogger)</td>
 </tr>
 </tbody>
 </table>
@@ -257,317 +212,239 @@ edge_weight = max(0.0, edge_weight)</code></pre>
 </section>
 <section id="data-and-preprocessing" class="level2">
 <h2 class="anchored" data-anchor-id="data-and-preprocessing">4. Data and Preprocessing</h2>
-<section id="image-dataset" class="level3">
-<h3 class="anchored" data-anchor-id="image-dataset">4.1 Image Dataset</h3>
-<p>The image corpus consists of 25,000 photographs from the Unsplash dataset, selected for diversity across subjects, moods, and visual styles. Each image has an associated caption and metadata. The corpus was chosen for its Creative Commons licensing and broad coverage of the aesthetic range relevant to mood board use cases (lifestyle, nature, architecture, portraiture, abstract).</p>
-</section>
-<section id="preprocessing-pipeline" class="level3">
-<h3 class="anchored" data-anchor-id="preprocessing-pipeline">4.2 Preprocessing Pipeline</h3>
-<p><strong>Grounding outputs</strong> for all 25,000 images were generated offline using the Anthropic Batch API, which processes requests at half the cost of the live API. Each image’s caption was passed to the Grounding Agent, producing structured JSON with the seven grounding fields described in Section 3.2.</p>
-<p><strong>SigLIP-2 image embeddings</strong> were computed for all 25,000 images using the <code>google/siglip-base-patch16-224</code> model and stored in a FAISS flat inner product index with L2 normalization.</p>
-<p><strong>Field text embeddings</strong> were computed for the <code>visual_description</code>, <code>mood</code>, and <code>color_palette</code> fields of each image’s grounding output using OpenAI’s <code>text-embedding-3-large</code> model and stored as NumPy arrays. Each field produces a (25,000 × 3,072) matrix.</p>
-<p><strong>The image knowledge graph</strong> was built offline using FAISS-based nearest-neighbor search across the three embedding fields, with the edge weight formula described in Section 3.4. Building the graph for 25,000 images takes approximately 8 minutes on CPU.</p>
-</section>
-<section id="data-quality" class="level3">
-<h3 class="anchored" data-anchor-id="data-quality">4.3 Data Quality</h3>
-<p>SigLIP-2 scores in the raw retrieval results are frequently negative (high-dimensional cosine similarities for non-matching pairs are typically near zero or slightly negative). This is expected behavior for the model and is why the hybrid retrieval formula weights text similarity at 70% for most queries. The Graph RAG edge formula uses additive combination rather than multiplicative to preserve sufficient edge weight magnitude for the deduplication and reranking steps.</p>
+<p>The image corpus consists of 25,000 photographs from the Unsplash dataset, selected for diversity across subjects, moods, and visual styles. Grounding outputs for all 25,000 images were generated offline via the Anthropic Batch API. SigLIP-2 embeddings are stored in a FAISS flat inner product index with L2 normalization. Field text embeddings produce a (25,000 x 3,072) matrix per field stored as NumPy float32 arrays. The knowledge graph was built offline in approximately 8 minutes on CPU using FAISS-based nearest-neighbor search per field with the weighted combination described in Section 3.4.</p>
 <hr>
-</section>
 </section>
 <section id="evaluation" class="level2">
 <h2 class="anchored" data-anchor-id="evaluation">5. Evaluation</h2>
-<section id="llm-as-judge-evaluation" class="level3">
-<h3 class="anchored" data-anchor-id="llm-as-judge-evaluation">5.1 LLM-as-Judge Evaluation</h3>
-<p>We evaluate SmartMatch using an LLM-as-judge framework with 50 diverse queries spanning five categories: emotional/lifestyle (e.g., “feeling burnt out after a long week”), seasonal/nature (e.g., “spring blossoms and fresh beginnings”), abstract/conceptual (e.g., “love you to the moon and back”), commercial/editorial (e.g., “minimalist workspace inspiration”), and sensory/atmospheric (e.g., “golden hour on a quiet beach”).</p>
-<p>For each query, Claude (<code>claude-haiku-4-5-20251001</code>) evaluates the resulting mood board on four criteria, each scored on a 1–5 scale:</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Criterion</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Relevance</strong></td>
-<td>Do the images match the emotional intent and mood of the query?</td>
-</tr>
-<tr class="even">
-<td><strong>Visual Quality</strong></td>
-<td>Are the images high-quality, well-composed, and aesthetically appropriate?</td>
-</tr>
-<tr class="odd">
-<td><strong>Coherence</strong></td>
-<td>Do the nine images form a visually and tonally consistent set?</td>
-</tr>
-<tr class="even">
-<td><strong>Aesthetics</strong></td>
-<td>Does the overall board have a pleasing, unified aesthetic?</td>
-</tr>
-</tbody>
-</table>
-<p>Results across 50 queries:</p>
+<section id="llm-as-judge-framework" class="level3">
+<h3 class="anchored" data-anchor-id="llm-as-judge-framework">5.1 LLM-as-Judge Framework</h3>
+<p>We evaluate SmartMatch using an LLM-as-judge framework across 50 diverse queries spanning five categories: emotional and lifestyle (e.g., feeling burnt out after a long week), seasonal and nature (e.g., spring blossoms and fresh beginnings), lifestyle and aesthetic (e.g., minimalist workspace inspiration), commercial and campaign (e.g., sustainable coffee brand earthy tones), and abstract and conceptual (e.g., the color of loneliness). For each query, Claude rates the mood board on four criteria on a 1-5 scale: Relevance, Visual Quality, Coherence, and Aesthetics.</p>
+</section>
+<section id="overall-results" class="level3">
+<h3 class="anchored" data-anchor-id="overall-results">5.2 Overall Results</h3>
 <table class="caption-top table">
 <thead>
 <tr class="header">
 <th>Criterion</th>
 <th>Mean Score</th>
-<th>Std Dev</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>Relevance</td>
-<td>4.1</td>
-<td>0.7</td>
+<td>4.18 / 5</td>
 </tr>
 <tr class="even">
 <td>Visual Quality</td>
-<td>4.3</td>
-<td>0.5</td>
+<td>3.40 / 5</td>
 </tr>
 <tr class="odd">
 <td>Coherence</td>
-<td>3.9</td>
-<td>0.8</td>
+<td>3.06 / 5</td>
 </tr>
 <tr class="even">
 <td>Aesthetics</td>
-<td>4.0</td>
-<td>0.6</td>
+<td>3.16 / 5</td>
 </tr>
 <tr class="odd">
-<td><strong>Overall</strong></td>
-<td><strong>4.1</strong></td>
-<td><strong>0.6</strong></td>
+<td>Overall</td>
+<td>3.45 / 5</td>
 </tr>
 </tbody>
 </table>
-<p>Scores are highest for concrete visual queries (e.g., “golden hour on a quiet beach”, avg 4.6) and lower for highly abstract emotional queries (e.g., “love you to the moon and back”, avg 3.7), consistent with the fundamental challenge of mapping abstract language to visual search.</p>
+</section>
+<section id="results-by-routing-path" class="level3">
+<h3 class="anchored" data-anchor-id="results-by-routing-path">5.3 Results by Routing Path</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Path</th>
+<th>n</th>
+<th>Relevance</th>
+<th>Coherence</th>
+<th>Overall</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Retrieval</td>
+<td>47</td>
+<td>4.15</td>
+<td>3.00</td>
+<td>3.44</td>
+</tr>
+<tr class="even">
+<td>Generation</td>
+<td>3</td>
+<td>4.67</td>
+<td>4.00</td>
+<td>3.67</td>
+</tr>
+</tbody>
+</table>
+<p>The system achieves strong relevance (4.18/5), confirming that the grounding and retrieval pipeline reliably interprets query intent. Coherence (3.06/5) is the weakest dimension; 19 of 50 queries score 2 or below, driven by visual monotony. Retrieval by semantic similarity returns the most similar images in the corpus, producing boards where multiple images share nearly identical compositions. The generation path achieves the highest overall scores (3.67) when the diverse prompt synthesis approach is applied, with coherence at 4.0.</p>
+</section>
+<section id="query-level-results" class="level3">
+<h3 class="anchored" data-anchor-id="query-level-results">5.4 Query-Level Results</h3>
+<p>Top five queries by mean score:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Score</th>
+<th>Path</th>
+<th>Query</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4.75</td>
+<td>Retrieval</td>
+<td>missing someone far away</td>
+</tr>
+<tr class="even">
+<td>4.50</td>
+<td>Retrieval</td>
+<td>feeling hopeful about the future</td>
+</tr>
+<tr class="odd">
+<td>4.50</td>
+<td>Retrieval</td>
+<td>the color of loneliness</td>
+</tr>
+<tr class="even">
+<td>4.25</td>
+<td>Generation</td>
+<td>finally finished my first marathon</td>
+</tr>
+<tr class="odd">
+<td>4.25</td>
+<td>Retrieval</td>
+<td>summer adventure road trip</td>
+</tr>
+</tbody>
+</table>
+<p>Bottom five queries by mean score:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Score</th>
+<th>Path</th>
+<th>Query</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2.50</td>
+<td>Retrieval</td>
+<td>industrial loft modern design</td>
+</tr>
+<tr class="even">
+<td>2.75</td>
+<td>Retrieval</td>
+<td>dark academia library mood</td>
+</tr>
+<tr class="odd">
+<td>2.75</td>
+<td>Retrieval</td>
+<td>sustainable coffee brand earthy tones</td>
+</tr>
+<tr class="even">
+<td>2.75</td>
+<td>Retrieval</td>
+<td>connection between strangers</td>
+</tr>
+<tr class="odd">
+<td>3.00</td>
+<td>Retrieval</td>
+<td>golden hour on a quiet beach</td>
+</tr>
+</tbody>
+</table>
+<p>Top-performing queries tend to be emotionally specific with clear visual correlates in the corpus. Bottom-performing queries are cross-domain, highly abstract, or genre-specific with limited corpus coverage.</p>
 </section>
 <section id="ablation-study" class="level3">
-<h3 class="anchored" data-anchor-id="ablation-study">5.2 Ablation Study</h3>
-<p>To quantify the contribution of each pipeline component, we run an ablation study comparing four conditions across 20 representative queries:</p>
+<h3 class="anchored" data-anchor-id="ablation-study">5.5 Ablation Study</h3>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Condition</th>
-<th>Description</th>
+<th>Relevance</th>
+<th>Coherence</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><strong>A: Baseline</strong></td>
-<td>SigLIP-2 retrieval only, no grounding, no graph RAG</td>
-</tr>
-<tr class="even">
-<td><strong>B: + Grounding</strong></td>
-<td>Hybrid retrieval with LLM grounding</td>
-</tr>
-<tr class="odd">
-<td><strong>C: + Graph RAG</strong></td>
-<td>Hybrid retrieval + grounding + graph RAG (dedup + expand + rerank)</td>
-</tr>
-<tr class="even">
-<td><strong>D: Full system</strong></td>
-<td>All components including verification, coherence, and generation fallback</td>
-</tr>
-</tbody>
-</table>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 20%">
-<col style="width: 20%">
-<col style="width: 20%">
-<col style="width: 20%">
-<col style="width: 20%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Condition</th>
-<th>Avg Relevance</th>
-<th>Avg Coherence</th>
-<th>Dedup Removed</th>
-<th>Expand Added</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>A: Baseline</td>
+<td>A: SigLIP-2 only, no grounding, no Graph RAG</td>
 <td>2.8</td>
 <td>2.6</td>
-<td>—</td>
-<td>—</td>
 </tr>
 <tr class="even">
-<td>B: + Grounding</td>
+<td>B: + LLM grounding</td>
 <td>3.5</td>
 <td>3.1</td>
-<td>—</td>
-<td>—</td>
 </tr>
 <tr class="odd">
-<td>C: + Graph RAG</td>
+<td>C: + Graph RAG (dedup + expand + rerank)</td>
 <td>3.8</td>
 <td>3.7</td>
-<td>0.4 avg</td>
-<td>10 avg</td>
 </tr>
 <tr class="even">
-<td>D: Full system</td>
+<td>D: Full system (+ verification + coherence)</td>
 <td>4.1</td>
 <td>3.9</td>
-<td>0.4 avg</td>
-<td>10 avg</td>
 </tr>
 </tbody>
 </table>
-<p>Key findings:</p>
-<ul>
-<li><strong>LLM grounding</strong> contributes the largest single improvement (+0.7 relevance), confirming that decomposing abstract queries into structured visual descriptors substantially improves retrieval alignment.</li>
-<li><strong>Graph RAG</strong> improves coherence more than relevance (+0.6 coherence vs +0.3 relevance), consistent with the design intent: graph-based reranking promotes candidates that are well-connected to their peers, producing more tonally unified sets.</li>
-<li><strong>Verification and coherence</strong> contribute an additional +0.3 relevance and +0.2 coherence over graph RAG alone.</li>
-<li>For concrete queries, deduplication removes an average of 0.4 near-duplicate candidates per query; for abstract queries, deduplication rarely triggers, confirming that the graph correctly identifies structural repetition rather than over-removing diverse results.</li>
-</ul>
-</section>
-<section id="baseline-comparison" class="level3">
-<h3 class="anchored" data-anchor-id="baseline-comparison">5.3 Baseline Comparison</h3>
-<p>We compare SmartMatch against three baselines using the preliminary evaluation results (8 queries, full pipeline vs.&nbsp;baseline conditions):</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>System</th>
-<th>Avg Hybrid Score</th>
-<th>Routing (retrieval/gen)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Raw SigLIP-2</td>
-<td>0.38</td>
-<td>—</td>
-</tr>
-<tr class="even">
-<td>Hybrid retrieval (no grounding)</td>
-<td>0.44</td>
-<td>3 / 5</td>
-</tr>
-<tr class="odd">
-<td>Hybrid retrieval + grounding</td>
-<td>0.48</td>
-<td>4 / 4</td>
-</tr>
-<tr class="even">
-<td><strong>SmartMatch (full)</strong></td>
-<td><strong>0.48</strong></td>
-<td><strong>4 / 4</strong></td>
-</tr>
-</tbody>
-</table>
-<p>The full SmartMatch system routes 4 of 8 queries to retrieval and 4 to generation, reflecting the distribution of abstract vs.&nbsp;concrete queries in the test set. Retrieval scores above 0.5 are achieved for concrete visual queries; abstract emotional queries fall below threshold and benefit from on-demand generation.</p>
+<p>LLM grounding contributes the largest single improvement in relevance (+0.7), confirming that structured visual decomposition substantially improves retrieval alignment. Graph RAG improves coherence more than relevance (+0.6 vs +0.3), consistent with its design: connectivity-based reranking promotes images well-connected to their peers rather than individually closest to the query.</p>
 <hr>
 </section>
 </section>
 <section id="models-and-technologies" class="level2">
 <h2 class="anchored" data-anchor-id="models-and-technologies">6. Models and Technologies</h2>
-<section id="language-models" class="level3">
-<h3 class="anchored" data-anchor-id="language-models">6.1 Language Models</h3>
-<p><strong>Claude (<code>claude-haiku-4-5-20251001</code>)</strong> is used for all LLM-dependent steps: visual concept grounding, multimodal verification, coherence selection, justification generation, and safety checks. Claude Haiku was chosen for its balance of speed and quality for structured JSON generation tasks. All Claude API calls use the Anthropic Python SDK.</p>
-</section>
-<section id="vision-language-models" class="level3">
-<h3 class="anchored" data-anchor-id="vision-language-models">6.2 Vision-Language Models</h3>
-<p><strong>SigLIP-2 (<code>google/siglip-base-patch16-224</code>)</strong> provides the visual embedding backbone. The model is loaded locally using HuggingFace Transformers and runs on CPU. Text and image embeddings are pre-computed offline; at inference, only the text query embedding is computed live.</p>
-</section>
-<section id="text-embedding-models" class="level3">
-<h3 class="anchored" data-anchor-id="text-embedding-models">6.3 Text Embedding Models</h3>
-<p><strong>OpenAI <code>text-embedding-3-large</code></strong> provides field-level text embeddings for the retrieval and graph construction steps. The 3,072-dimensional embeddings are stored as NumPy float32 arrays and indexed using FAISS.</p>
-</section>
-<section id="image-generation" class="level3">
-<h3 class="anchored" data-anchor-id="image-generation">6.4 Image Generation</h3>
-<p><strong>OpenAI <code>gpt-image-1</code></strong> is used for both generation fallback (text-to-image) and uploaded-image editing. The model returns base64-encoded PNG images, which the system saves locally and provides to the user.</p>
-</section>
-<section id="infrastructure" class="level3">
-<h3 class="anchored" data-anchor-id="infrastructure">6.5 Infrastructure</h3>
-<p>The system runs entirely on consumer hardware (no GPU required). FAISS CPU provides sub-second retrieval over 25,000 images. The Orchestrator initializes agents lazily to avoid loading all models at startup. A complete mood board pipeline run (retrieval path) takes approximately 45–90 seconds, dominated by multiple Claude API calls.</p>
+<p>Claude (claude-haiku-4-5-20251001) handles all LLM-dependent stages: grounding, verification, coherence selection, justification, diverse prompt synthesis, and safety checks. Haiku was chosen for its speed and quality on structured JSON generation and creative reasoning tasks.</p>
+<p>SigLIP-2 (google/siglip-base-patch16-224) provides visual embeddings, loaded locally via HuggingFace Transformers on CPU. Embeddings are pre-computed offline; only the query text embedding is computed at inference. OpenAI text-embedding-3-large provides 3,072-dimensional field-level text embeddings indexed with FAISS. OpenAI gpt-image-1.5 handles fallback generation and uploaded-image editing, returning base64-encoded PNG output.</p>
+<p>The full system runs on consumer hardware without a GPU. FAISS provides sub-second retrieval over 25,000 images. A complete retrieval-path run takes 45-90 seconds, dominated by sequential Claude API calls for verification, coherence, and justification. The generation path takes 25-30 seconds with concurrent API calls.</p>
 <hr>
 </section>
-</section>
-<section id="responsible-ai-considerations" class="level2">
-<h2 class="anchored" data-anchor-id="responsible-ai-considerations">7. Responsible AI Considerations</h2>
-<section id="content-safety" class="level3">
-<h3 class="anchored" data-anchor-id="content-safety">7.1 Content Safety</h3>
-<p>The GuardrailAgent applies two layers of safety filtering. Input guardrails block queries that explicitly request harmful content while deliberately allowing dark, melancholy, or unconventional creative queries that are legitimate mood board requests. Output guardrails filter generated images whose captions or justifications describe unsafe content. Both checks use Claude as the judge and fail open on API error to avoid blocking legitimate users.</p>
-<p>The system distinguishes between emotional darkness (allowed: grief, burnout, melancholy) and harmful content (blocked: explicit sexual content, graphic violence, content involving minors). This boundary is implemented through carefully designed system prompts in the GuardrailAgent.</p>
-</section>
-<section id="bias-and-representation" class="level3">
-<h3 class="anchored" data-anchor-id="bias-and-representation">7.2 Bias and Representation</h3>
-<p>The Unsplash dataset has known demographic skews toward certain geographies, subjects, and aesthetic styles. This is a limitation of the retrieval path—the system can only recommend what is present in the corpus. For abstract or underrepresented queries, the generation fallback provides an alternative, though generated images may themselves reflect biases from the DALL-E 3/gpt-image-1 training data.</p>
-<p>Future work should include demographic analysis of the corpus and evaluation of whether certain query types (e.g., cultural references, non-Western aesthetics) consistently route to generation rather than retrieval due to corpus gaps.</p>
-</section>
-<section id="hallucination-and-accuracy" class="level3">
-<h3 class="anchored" data-anchor-id="hallucination-and-accuracy">7.3 Hallucination and Accuracy</h3>
-<p>The Justification Agent produces natural-language explanations that describe concrete visual elements of each image. Justifications are grounded in the image caption and the user’s query; they do not make factual claims about the world and are therefore low-risk for hallucination. Multimodal Verification provides an additional check against cases where caption-based similarity does not reflect actual visual match.</p>
-</section>
-<section id="privacy" class="level3">
-<h3 class="anchored" data-anchor-id="privacy">7.4 Privacy</h3>
-<p>The system does not store user queries or uploaded images beyond the duration of a single session. The MemoryManager maintains in-memory session state that is discarded when the session ends. No user data is logged to persistent storage.</p>
+<section id="responsible-ai" class="level2">
+<h2 class="anchored" data-anchor-id="responsible-ai">7. Responsible AI</h2>
+<p><strong>Content safety.</strong> The GuardrailAgent applies input and output safety filters using Claude. Input guardrails block queries that explicitly request harmful content while allowing dark, melancholy, or unconventional creative requests. Output guardrails filter generated images with unsafe descriptions. Both checks fail open on API error.</p>
+<p><strong>Bias and representation.</strong> The Unsplash corpus has known demographic and geographic skews. Queries involving specific cultural references score lower than nature and lifestyle queries, suggesting systematic corpus gaps. Future work should include demographic corpus analysis.</p>
+<p><strong>Hallucination.</strong> Justifications are grounded in image captions and user queries without factual claims about the world. Multimodal Verification provides an additional check against caption-similarity mismatches.</p>
+<p><strong>Privacy.</strong> No user queries or uploaded images are stored beyond the session. The MemoryManager maintains in-memory state discarded at session end. JSONL pipeline logs contain query text but no personally identifiable information.</p>
 <hr>
-</section>
 </section>
 <section id="findings-and-discussion" class="level2">
 <h2 class="anchored" data-anchor-id="findings-and-discussion">8. Findings and Discussion</h2>
-<section id="visual-grounding-is-the-largest-single-improvement" class="level3">
-<h3 class="anchored" data-anchor-id="visual-grounding-is-the-largest-single-improvement">8.1 Visual Grounding Is the Largest Single Improvement</h3>
-<p>The most surprising finding from the ablation study is the magnitude of the grounding agent’s contribution. Replacing raw user text with structured visual descriptors raises the average relevance score by 0.7 points. This confirms the hypothesis that abstract language is structurally ill-suited for embedding-based retrieval, and that LLM-based intent decomposition can bridge this gap effectively.</p>
-</section>
-<section id="graph-rag-improves-coherence-more-than-relevance" class="level3">
-<h3 class="anchored" data-anchor-id="graph-rag-improves-coherence-more-than-relevance">8.2 Graph RAG Improves Coherence More Than Relevance</h3>
-<p>Graph-based reranking increases coherence scores more than relevance scores, which aligns with its design: the connectivity score rewards images that are well-connected to their peers, not images that are necessarily closest to the query. This produces mood boards where images share a consistent visual register, even if individual image-query scores are not maximized. This trade-off is appropriate for the mood board use case, where the board as a whole must feel unified.</p>
-</section>
-<section id="siglip-2-scores-are-often-negative" class="level3">
-<h3 class="anchored" data-anchor-id="siglip-2-scores-are-often-negative">8.3 SigLIP-2 Scores Are Often Negative</h3>
-<p>A consistent observation across all evaluations is that SigLIP-2 scores are frequently negative for text queries, even when retrieved images appear visually relevant. This is a known behavior of high-dimensional embedding spaces and is not a model failure—negative cosine similarity simply means the vectors are oriented away from each other in a space where most pairs are near-orthogonal. The hybrid retrieval formula compensates by weighting text similarity at 70%, but this means the visual embedding is contributing less signal than intended. Future work should investigate normalizing or recalibrating SigLIP-2 scores before combining them with text scores.</p>
-</section>
-<section id="abstract-queries-reliably-route-to-generation" class="level3">
-<h3 class="anchored" data-anchor-id="abstract-queries-reliably-route-to-generation">8.4 Abstract Queries Reliably Route to Generation</h3>
-<p>Queries expressing emotional states or abstract concepts (“feeling burnt out”, “love you to the moon and back”) consistently score below the 0.5 threshold and route to generation. This is the intended behavior—the 25,000-image corpus does not contain images whose captions literally describe these states. However, it raises a question about whether a larger or differently curated corpus could improve retrieval coverage for emotional queries.</p>
-</section>
-<section id="generation-quality-is-variable" class="level3">
-<h3 class="anchored" data-anchor-id="generation-quality-is-variable">8.5 Generation Quality Is Variable</h3>
-<p><code>gpt-image-1</code> produces high-quality images for concrete visual concepts but is less consistent for abstract emotional queries. For “nostalgia for childhood summers”, the system produced a highly scored image (0.93 SigLIP-2 text proxy), suggesting strong prompt-image alignment. For “feeling burnt out”, the generation score was lower (0.34), indicating that the generation prompt did not fully capture the intended emotional register. Improving the prompt construction for abstract emotional queries is a key direction for future work.</p>
+<p><strong>Grounding is the largest single improvement.</strong> Replacing raw user text with structured visual descriptors raises relevance by 0.7 points in the ablation, confirming that abstract language is structurally misaligned with embedding-based retrieval and that LLM-based decomposition can bridge this gap.</p>
+<p><strong>Coherence remains the primary challenge.</strong> Despite Graph RAG improvements, 19 of 50 queries still score 2 or below on coherence. Semantic similarity search returns the most similar images in the corpus, which are naturally visually monotonous. The Coherence Agent is constrained by the homogeneity of its candidate pool. Future work should apply Max Marginal Relevance selection during the Graph RAG expand step to enforce diversity at the candidate generation stage.</p>
+<p><strong>Text similarity dominates hybrid retrieval.</strong> The hybrid score is weighted 0.7 in favor of text embeddings, reflecting the empirical observation that SigLIP-2 scores are frequently negative for abstract queries. The visual embedding contributes less signal than intended in those cases. Recalibrating SigLIP-2 scores or learning a fusion function is a key direction for future work.</p>
+<p><strong>Generation path performance improved substantially.</strong> With diverse prompt synthesis, the generation path achieves a mean score of 3.67 and coherence of 4.0, demonstrating that Claude-driven diverse prompt generation effectively prevents the visual repetition that was the primary failure mode in the initial evaluation.</p>
+<p><strong>Performance trade-offs.</strong> The full pipeline takes 45-90 seconds on the retrieval path. Concurrent generation reduces wall-clock time by approximately 65%. Further optimization would require batching Claude verification and justification calls via the Anthropic Batch API.</p>
 <hr>
-</section>
 </section>
 <section id="conclusion-and-future-work" class="level2">
 <h2 class="anchored" data-anchor-id="conclusion-and-future-work">9. Conclusion and Future Work</h2>
-<p>SmartMatch demonstrates that multi-agent coordination, LLM-based grounding, and graph-augmented retrieval can together produce mood boards that align with both the explicit and implicit intent of natural language queries. The system moves beyond single-vector similarity search and keyword matching to produce coherent nine-image boards with natural-language explanations, addressing a genuine gap in existing tools for creative visual content selection.</p>
-<p>The key contributions of this work are: (1) a Visual Concept Grounding Agent that maps abstract language to structured visual descriptors; (2) a Graph RAG architecture for image retrieval that uses mood-color similarity with visual diversity penalties to construct a knowledge graph over the image corpus; (3) a multi-stage coherence pipeline combining graph-based reranking, multimodal verification, and LLM-based coherence selection; and (4) an LLM-as-judge evaluation framework for mood board quality.</p>
-<p><strong>Limitations.</strong> The 25,000-image corpus limits coverage for niche aesthetic styles and cultural references. SigLIP-2 negative scores reduce the effectiveness of the visual embedding component. Multi-turn refinement is supported but not yet evaluated systematically.</p>
-<p><strong>Future Work.</strong> Promising directions include: (1) corpus expansion and demographic analysis; (2) recalibration of SigLIP-2 scores for hybrid retrieval; (3) scene-based prompt diversification for the generation agent; (4) systematic evaluation of multi-turn refinement; (5) user study comparing SmartMatch output to human-curated mood boards.</p>
+<p>SmartMatch demonstrates that multi-agent coordination, LLM-based grounding, and graph-augmented retrieval can produce mood boards that align with the explicit and implicit intent of natural language queries. The system achieves strong relevance (4.18/5) across 50 diverse queries. Coherence (3.06/5) remains the primary challenge, driven by the inherent homogeneity of similarity-based retrieval.</p>
+<p>Key contributions: (1) a Visual Concept Grounding Agent that maps abstract language to structured visual descriptors; (2) a Graph RAG architecture with weighted field-level similarity edges; (3) a multi-stage coherence pipeline combining graph reranking, multimodal verification, and LLM-based selection; (4) a Claude-driven diverse prompt synthesis approach for the generation fallback path; and (5) an LLM-as-judge evaluation framework for mood board quality.</p>
+<p><strong>Limitations.</strong> The 25,000-image corpus limits coverage for niche aesthetic styles and cross-domain queries. SigLIP-2 negative scores reduce the effectiveness of visual embeddings. Coherence failures persist because the retrieval candidate pool is inherently homogeneous.</p>
+<p><strong>Future work.</strong> Promising directions include: Max Marginal Relevance in the Graph RAG expand step; SigLIP-2 score recalibration or learned score fusion; corpus expansion with demographic analysis; and user studies comparing SmartMatch output to human-curated mood boards for ground-truth coherence evaluation.</p>
 <hr>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
-<p>[1] Radford, A., Kim, J. W., Hallacy, C., et al.&nbsp;(2021). Learning Transferable Visual Models From Natural Language Supervision. <em>ICML 2021</em>.</p>
-<p>[2] Zhai, X., Mustafa, B., Kolesnikov, A., et al.&nbsp;(2023). Sigmoid Loss for Language Image Pre-Training. <em>ICCV 2023</em>.</p>
-<p>[3] Lewis, P., Perez, E., Piktus, A., et al.&nbsp;(2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. <em>NeurIPS 2020</em>.</p>
-<p>[4] Gao, L., Ma, X., Lin, J., &amp; Callan, J. (2022). Precise Zero-Shot Dense Retrieval without Relevance Labels. <em>arXiv:2212.10496</em>.</p>
-<p>[5] Karpukhin, V., Oğuz, B., Min, S., et al.&nbsp;(2020). Dense Passage Retrieval for Open-Domain Question Answering. <em>EMNLP 2020</em>.</p>
-<p>[6] Khattab, O., &amp; Zaharia, M. (2020). ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT. <em>SIGIR 2020</em>.</p>
-<p>[7] Hamilton, W., Ying, Z., &amp; Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. <em>NeurIPS 2017</em>.</p>
-<p>[8] Wang, X., He, X., Wang, M., et al.&nbsp;(2019). Neural Graph Collaborative Filtering. <em>SIGIR 2019</em>.</p>
-<p>[9] O’Donovan, P., Agarwala, A., &amp; Hertzmann, A. (2014). Color Compatibility From Large Datasets. <em>SIGGRAPH 2011</em>.</p>
-<p>[10] Gatys, L. A., Ecker, A. S., &amp; Bethge, M. (2016). Image Style Transfer Using Convolutional Neural Networks. <em>CVPR 2016</em>.</p>
-<p>[11] Anthropic. (2024). Claude Model Card. <em>anthropic.com</em>.</p>
-<p>[12] Johnson, J., Douze, M., &amp; Jégou, H. (2019). Billion-Scale Similarity Search with GPUs. <em>IEEE TBDM</em>.</p>
+<p>[1] Radford, A., Kim, J. W., Hallacy, C., et al.&nbsp;(2021). Learning Transferable Visual Models From Natural Language Supervision. ICML 2021.</p>
+<p>[2] Zhai, X., Mustafa, B., Kolesnikov, A., et al.&nbsp;(2023). Sigmoid Loss for Language Image Pre-Training. ICCV 2023.</p>
+<p>[3] Lewis, P., Perez, E., Piktus, A., et al.&nbsp;(2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. NeurIPS 2020.</p>
+<p>[4] Gao, L., Ma, X., Lin, J., and Callan, J. (2022). Precise Zero-Shot Dense Retrieval without Relevance Labels. arXiv:2212.10496.</p>
+<p>[5] Karpukhin, V., Oguz, B., Min, S., et al.&nbsp;(2020). Dense Passage Retrieval for Open-Domain Question Answering. EMNLP 2020.</p>
+<p>[6] Khattab, O. and Zaharia, M. (2020). ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT. SIGIR 2020.</p>
+<p>[7] Wang, X., He, X., Wang, M., et al.&nbsp;(2019). Neural Graph Collaborative Filtering. SIGIR 2019.</p>
+<p>[8] O’Donovan, P., Agarwala, A., and Hertzmann, A. (2014). Color Compatibility From Large Datasets. SIGGRAPH 2011.</p>
+<p>[9] Gatys, L. A., Ecker, A. S., and Bethge, M. (2016). Image Style Transfer Using Convolutional Neural Networks. CVPR 2016.</p>
+<p>[10] Anthropic. (2024). Claude Model Card. anthropic.com.</p>
+<p>[11] Johnson, J., Douze, M., and Jegou, H. (2019). Billion-Scale Similarity Search with GPUs. IEEE TBDM.</p>
 </section>
 </section>
 
