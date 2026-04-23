@@ -1,0 +1,11 @@
+{
+  "n_total": 50,
+  "n_valid": 50,
+  "mean_Relevance": 4.1,
+  "mean_Visual_Quality": 3.3,
+  "mean_Coherence": 2.54,
+  "mean_Aesthetics": 2.9,
+  "mean_overall": 3.21,
+  "pct_retrieval": 94.0,
+  "pct_generation": 6.0
+}
