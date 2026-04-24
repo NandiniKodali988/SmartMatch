@@ -22,6 +22,7 @@ import io
 import os
 import sys
 import tempfile
+from pathlib import Path
 
 import requests
 import streamlit as st
@@ -30,6 +31,39 @@ from PIL import Image as PILImage
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 load_dotenv(find_dotenv())
+
+# ── Auto-download large data files from HF Dataset if missing ─────────────────
+def _ensure_data_files():
+    token = os.environ.get("HF_TOKEN")
+    if not token:
+        return
+    base = Path(__file__).parent
+    files = [
+        ("image_embeddings.npy",          base / "data/embeddings/image_embeddings.npy"),
+        ("field_embeddings.npz",           base / "data/embeddings/field_embeddings.npz"),
+        ("dataset_clean.csv",              base / "data/processed/dataset_clean.csv"),
+        ("image_graph.pkl",                base / "data/graph/image_graph.pkl"),
+        ("description_grounding_outputs.json", base / "data/processed/description_grounding_outputs.json"),
+    ]
+    missing = [(name, path) for name, path in files if not path.exists()]
+    if not missing:
+        return
+    try:
+        from huggingface_hub import hf_hub_download
+        for name, dest_path in missing:
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            st.toast(f"Downloading {name}…", icon="⏳")
+            hf_hub_download(
+                repo_id="NandiniKodali/smartmatch_data",
+                filename=name,
+                repo_type="dataset",
+                local_dir=str(dest_path.parent),
+                token=token,
+            )
+    except Exception as e:
+        st.warning(f"Could not download data files: {e}")
+
+_ensure_data_files()
 
 from agents.orchestrator.agent import OrchestratorAgent
 from agents.generation.agent import GenerationAgent

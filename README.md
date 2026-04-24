@@ -1,3 +1,14 @@
+---
+title: SmartMatch
+emoji: 🖼️
+colorFrom: blue
+colorTo: purple
+sdk: streamlit
+sdk_version: 1.44.0
+app_file: src/app.py
+pinned: false
+---
+
 # SmartMatch: Multimodal Image Recommendation via SigLip-2 and Claude
 
 ## Abstract
