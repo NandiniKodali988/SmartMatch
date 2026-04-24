@@ -22,8 +22,7 @@ Selecting images for a mood board requires matching visual output to emotional i
 
 A system designed to bridge this gap must do more than retrieve images. It must interpret intent, structure the retrieval problem, evaluate coherence across a set of images, and explain its selections. SmartMatch addresses all four requirements through a coordinated multi-agent architecture.
 
-The research questions motivating this work are: (1) Does LLM-based visual grounding improve retrieval quality for abstract queries compared to direct embedding search? (2) Does graph-augmented retrieval improve mood board coherence compared to flat similarity search? (3) How well does an LLM-as-judge framework capture the structural quality properties of a mood board?
-
+The research questions motivating this work are: (1) Does LLM-based visual grounding improve retrieval quality for abstract queries compared to direct embedding search? (2) Does graph-augmented retrieval improve mood board coherence compared to flat similarity search? 
 ---
 
 ## 2. Related Work
@@ -44,7 +43,7 @@ SmartMatch is a multi-agent pipeline coordinated by an OrchestratorAgent that ma
 
 ### 3.1 Pipeline Overview
 
-The pipeline follows two branches. Branch A handles uploaded images: after grounding, the system routes directly to the Generation Agent for image editing. Branch B, the primary path, handles text-only queries through hybrid retrieval, Graph RAG, verification, and coherence selection. If the top retrieval score falls below a threshold of 0.5, the system falls back to on-demand generation. The routing decision uses the pre-Graph RAG score to avoid inflating scores for abstract queries that should fall back to generation.
+The pipeline follows two branches. Branch A handles uploaded images: after grounding, the system routes directly to the Generation Agent for image editing. Branch B, the primary path, handles text-only queries through hybrid retrieval, Graph RAG, verification, and coherence selection. If the top retrieval score falls below a threshold of 0.5, the system falls back to on-demand generation. The routing decision deliberately uses the pre-Graph RAG hybrid score rather than the post-reranking score: graph expansion and connectivity-based reranking can inflate scores for abstract queries by surfacing well-connected neighbors, masking the fact that no genuinely relevant images exist in the corpus. Using the raw hybrid score as the routing signal ensures the generation fallback is triggered when retrieval quality is actually insufficient.
 
 ![Figure 1: SmartMatch System Architecture](images/Pipeline.png)
 
@@ -62,14 +61,14 @@ The grounding agent transforms raw user text into a structured JSON object using
 | color_palette | Dominant colors and tones |
 | intent | Use case: professional, editorial, or social |
 
-The agent supports multi-turn context via a MemoryManager that stores grounding outputs per session, so follow-up queries modify the previous grounding rather than starting from scratch. For offline preprocessing, the Anthropic Batch API generates grounding outputs for all 25,000 corpus images at a 50% cost reduction versus the live API.
+The agent supports multi-turn refinement via a MemoryManager that persists grounding outputs across turns within a session. When a user submits a follow-up request — whether through the text input or the chat interface — the new query is composed with the previous grounding output and the full conversation history, so the system modifies direction incrementally rather than restarting from scratch. For example, after generating an initial board for "feeling burnt out after a long week," a follow-up of "make it warmer and less isolated" shifts the mood and color_palette fields while preserving the original scene and intent. Liked images are kept across turns; only the remaining slots are re-retrieved or re-generated. For offline preprocessing, the Anthropic Batch API generates grounding outputs for all 25,000 corpus images at a 50% cost reduction versus the live API, and eliminates per-image LLM calls entirely from the inference path — reducing live Claude usage to query-level grounding only.
 
 ### 3.3 Hybrid Retrieval
 
 Retrieval combines two complementary signals. The SigLIP-2 Retrieval Agent performs cosine similarity search over a FAISS index of 25,000 pre-computed image embeddings using google/siglip-base-patch16-224. The Field Text Retrieval Agent computes per-field semantic embeddings via OpenAI text-embedding-3-large independently for visual_description, mood, and color_palette. The hybrid score is:
 
 ```
-score = 0.7 * siglip_score + 0.3 * text_score
+score = 0.3 * siglip_score + 0.7 * text_score
 ```
 
 Text similarity is weighted more heavily (0.7) because SigLIP-2 scores are frequently negative in high-dimensional space, particularly for abstract emotional queries. The text embedding component reliably captures the semantic intent of the grounding output. The system retrieves up to 20 candidates before Graph RAG processing.
@@ -96,7 +95,7 @@ The Multimodal Verification Agent passes each candidate to Claude Vision, evalua
 
 ### 3.6 Generation Agent
 
-When retrieval fails, the Generation Agent synthesizes images using gpt-image-1.5. The key mechanism is Claude-driven diverse prompt synthesis: before generation, Claude produces n visually distinct image descriptions enforcing variation across subject type (person, interior, outdoor, still life, abstract, urban, nature, silhouette, aerial), scale (extreme close-up through aerial), and emotional register (literal, symbolic, atmospheric). Each description is combined with a distinct photographic style variant. API calls run concurrently with a thread pool of 3 workers, reducing wall-clock time from approximately 90 seconds to 25-30 seconds. If any image scores below 0.15, Claude refines that specific prompt using the prior prompt and score as context.
+When retrieval fails, the Generation Agent synthesizes images using gpt-image-1.5. The key mechanism is Claude-driven diverse prompt synthesis: before generation, Claude produces n visually distinct image descriptions enforcing variation across subject type (person, interior, outdoor, still life, abstract, urban, nature, silhouette, aerial), scale (extreme close-up through aerial), and emotional register (literal, symbolic, atmospheric). Each description is combined with a distinct photographic style variant. API calls run concurrently with a thread pool of 3 workers, reducing wall-clock time from approximately 90 seconds to 25-30 seconds. If any generated image scores below 0.15 on the hybrid similarity measure, Claude refines that specific prompt using the prior prompt and score as context and regenerates only that image — a targeted quality-enforcement loop that avoids discarding the full batch while ensuring the board meets a minimum visual standard.
 
 ### 3.7 Justification Agent
 
@@ -104,7 +103,7 @@ The Justification Agent produces a 2-3 sentence per-image explanation grounded i
 
 ### 3.8 Supporting Components
 
-The OrchestratorAgent coordinates all stages via lazy agent initialization. The GuardrailAgent blocks harmful queries while allowing dark, melancholy, or unconventional creative requests, and fails open on API error. The PipelineLogger writes structured JSONL logs capturing step timings, routing decisions, and verification outcomes.
+The OrchestratorAgent coordinates all stages via lazy agent initialization. The GuardrailAgent blocks harmful queries while allowing dark, melancholy, or unconventional creative requests, and fails open on API error. The PipelineLogger writes structured JSONL logs capturing step timings, routing decisions, and verification outcomes. The Streamlit interface exposes multi-turn refinement through a persistent chat panel: after a board is generated, users can type natural-language feedback (e.g., "more abstract, remove people") which triggers re-grounding with the accumulated conversation history, keeping liked images and replacing the rest.
 
 ### 3.9 External Services
 
@@ -114,7 +113,7 @@ The OrchestratorAgent coordinates all stages via lazy agent initialization. The 
 | Image retrieval embeddings | SigLIP-2 (google/siglip-base-patch16-224) |
 | Field-level text embeddings | OpenAI text-embedding-3-large |
 | Fallback image generation | OpenAI gpt-image-1.5 |
-| Similarity search | FAISS (CPU) |
+| Similarity search | FAISS |
 | Image dataset | Unsplash (25,000 images) |
 | Batch grounding preprocessing | Anthropic Batch API |
 
@@ -142,12 +141,16 @@ We evaluate SmartMatch using an LLM-as-judge framework across 50 diverse queries
 | Aesthetics | 3.16 / 5 |
 | Overall | 3.45 / 5 |
 
+![Figure 2](../src/evaluation/results/plots/02_distributions.png)
+
 ### 5.3 Results by Routing Path
 
 | Path | n | Relevance | Coherence | Overall |
 |---|---|---|---|---|
 | Retrieval | 47 | 4.15 | 3.00 | 3.44 |
 | Generation | 3 | 4.67 | 4.00 | 3.67 |
+
+![Figure 3](../src/evaluation/results/plots/03_routing_overview.png)
 
 The system achieves strong relevance (4.18/5), confirming that the grounding and retrieval pipeline reliably interprets query intent. Coherence (3.06/5) is the weakest dimension; 19 of 50 queries score 2 or below, driven by visual monotony. Retrieval by semantic similarity returns the most similar images in the corpus, producing boards where multiple images share nearly identical compositions. The generation path achieves the highest overall scores (3.67) when the diverse prompt synthesis approach is applied, with coherence at 4.0.
 
@@ -214,7 +217,7 @@ The full system runs on consumer hardware without a GPU. FAISS provides sub-seco
 
 **Grounding is the largest single improvement.** Replacing raw user text with structured visual descriptors raises relevance by 0.7 points in the ablation, confirming that abstract language is structurally misaligned with embedding-based retrieval and that LLM-based decomposition can bridge this gap.
 
-**Coherence remains the primary challenge.** Despite Graph RAG improvements, 19 of 50 queries still score 2 or below on coherence. Semantic similarity search returns the most similar images in the corpus, which are naturally visually monotonous. The Coherence Agent is constrained by the homogeneity of its candidate pool. Future work should apply Max Marginal Relevance selection during the Graph RAG expand step to enforce diversity at the candidate generation stage.
+**Coherence remains the primary challenge.** Despite Graph RAG improvements, 19 of 50 queries still score 2 or below on coherence. Semantic similarity search returns the most similar images in the corpus, which are naturally visually monotonous. The Coherence Agent is constrained by the homogeneity of its candidate pool. The multi-turn refinement loop provides a complementary mechanism: user like/dislike signals and natural-language feedback (e.g., "too dark, replace with something brighter") are folded into the next grounding call, steering retrieval toward underrepresented visual directions and allowing the board to converge toward the user's aesthetic intent across turns. This addresses coherence failures that stem from misalignment between query intent and corpus coverage, though it does not resolve failures caused by structural candidate-pool homogeneity. The latter requires enforcing diversity at the retrieval stage itself — future work should apply Max Marginal Relevance during the Graph RAG expand step.
 
 **Text similarity dominates hybrid retrieval.** The hybrid score is weighted 0.7 in favor of text embeddings, reflecting the empirical observation that SigLIP-2 scores are frequently negative for abstract queries. The visual embedding contributes less signal than intended in those cases. Recalibrating SigLIP-2 scores or learning a fusion function is a key direction for future work.
 
@@ -228,11 +231,11 @@ The full system runs on consumer hardware without a GPU. FAISS provides sub-seco
 
 SmartMatch demonstrates that multi-agent coordination, LLM-based grounding, and graph-augmented retrieval can produce mood boards that align with the explicit and implicit intent of natural language queries. The system achieves strong relevance (4.18/5) across 50 diverse queries. Coherence (3.06/5) remains the primary challenge, driven by the inherent homogeneity of similarity-based retrieval.
 
-Key contributions: (1) a Visual Concept Grounding Agent that maps abstract language to structured visual descriptors; (2) a Graph RAG architecture with weighted field-level similarity edges; (3) a multi-stage coherence pipeline combining graph reranking, multimodal verification, and LLM-based selection; (4) a Claude-driven diverse prompt synthesis approach for the generation fallback path; and (5) an LLM-as-judge evaluation framework for mood board quality.
+Key contributions: (1) a Visual Concept Grounding Agent that maps abstract language to structured visual descriptors; (2) a Graph RAG architecture with weighted field-level similarity edges; (3) a multi-stage coherence pipeline combining graph reranking, multimodal verification, and LLM-based selection; (4) a Claude-driven diverse prompt synthesis approach for the generation fallback path; (5) a multi-turn refinement loop that accumulates conversation context to iteratively improve mood board direction; and (6) an LLM-as-judge evaluation framework for mood board quality.
 
 **Limitations.** The 25,000-image corpus limits coverage for niche aesthetic styles and cross-domain queries. SigLIP-2 negative scores reduce the effectiveness of visual embeddings. Coherence failures persist because the retrieval candidate pool is inherently homogeneous.
 
-**Future work.** Promising directions include: Max Marginal Relevance in the Graph RAG expand step; SigLIP-2 score recalibration or learned score fusion; corpus expansion with demographic analysis; and user studies comparing SmartMatch output to human-curated mood boards for ground-truth coherence evaluation.
+**Future work.** Promising directions include: Max Marginal Relevance in the Graph RAG expand step; SigLIP-2 score recalibration or learned score fusion; corpus expansion with demographic analysis; richer multi-turn grounding that tracks fine-grained preference signals (liked images, rejected styles) to actively steer retrieval across turns; and user studies comparing SmartMatch output to human-curated mood boards for ground-truth coherence evaluation.
 
 ---
 
