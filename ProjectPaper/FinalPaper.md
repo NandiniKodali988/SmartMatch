@@ -1,5 +1,7 @@
 # SmartMatch: A Multi-Agent Pipeline for Mood Board Generation via Graph-Augmented Retrieval and Multimodal Synthesis
 
+Team 04
+
 Qingyang Wang · Nandini Kodali · Caroline Delva · Xinzhou Li
 
 Georgetown University — DSAN 6725: Applied Generative AI for Developers — Spring 2026
@@ -23,6 +25,7 @@ Selecting images for a mood board requires matching visual output to emotional i
 A system designed to bridge this gap must do more than retrieve images. It must interpret intent, structure the retrieval problem, evaluate coherence across a set of images, and explain its selections. SmartMatch addresses all four requirements through a coordinated multi-agent architecture.
 
 The research questions motivating this work are: (1) Does LLM-based visual grounding improve retrieval quality for abstract queries compared to direct embedding search? (2) Does graph-augmented retrieval improve mood board coherence compared to flat similarity search? 
+
 ---
 
 ## 2. Related Work
