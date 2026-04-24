@@ -52,26 +52,26 @@ User Text
 
 ---
 
-## Setup & Demo
+## Running Locally
 
 ### Prerequisites
 
 - Python 3.10+
-- API keys for Anthropic and OpenAI
+- API keys for Anthropic, OpenAI, and HuggingFace
 
-### Installation
+### 1. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Environment
-
-Copy `.env.example` to `.env` and fill in your API keys:
+### 2. Set up environment variables
 
 ```bash
 cp .env.example .env
 ```
+
+Fill in `.env`:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
@@ -79,24 +79,84 @@ OPENAI_API_KEY=sk-...
 HF_TOKEN=hf_...
 ```
 
-### Data
+### 3. Download data files
 
-Place the following files (not tracked in git due to size):
+Large data files are hosted on HuggingFace and not tracked in git. Run the download script once:
 
-| File | Path |
+```bash
+python download_data.py
+```
+
+This downloads into `src/data/embeddings/` (~1 GB total):
+
+| File | Size |
 |------|------|
-| Image embeddings (SigLIP) | `src/data/embeddings/image_embeddings.npy` |
-| Field embeddings (text) | `src/data/embeddings/field_embeddings.npz` |
-| Dataset | `src/data/processed/dataset_clean.csv` |
-| Grounding outputs | `src/data/processed/description_grounding_outputs.json` |
+| `image_embeddings.npy` | 154 MB |
+| `field_embeddings.npz` | 922 MB |
 
-### Run the Demo
+The remaining files (`dataset_clean.csv`, `description_grounding_outputs.json`, graph files) are already in the repo.
+
+### 4. Run the app
 
 ```bash
 streamlit run src/app.py
 ```
 
-Open [http://localhost:8501](http://localhost:8501), type a description (e.g. *"morning coffee with documents scattered around"*), and click **Find Images**.
+Open [http://localhost:8501](http://localhost:8501) and describe a mood, feeling, or idea to generate a mood board.
+
+---
+
+## Deploying to HuggingFace Spaces
+
+The live demo is at [huggingface.co/spaces/NandiniKodali/smartmatch](https://huggingface.co/spaces/NandiniKodali/smartmatch).
+
+### First-time setup
+
+1. Create a Space at [huggingface.co/new-space](https://huggingface.co/new-space) — SDK: **Streamlit**, Hardware: **CPU Basic**
+2. Add secrets in Space Settings → Variables and Secrets:
+   - `ANTHROPIC_API_KEY`
+   - `OPENAI_API_KEY`
+   - `HF_TOKEN`
+3. Add the remote: `git remote add space https://huggingface.co/spaces/NandiniKodali/smartmatch`
+
+### Redeploy after changes
+
+HF Spaces rejects binary files and large files via standard git push, so deployments use a clean orphan branch:
+
+```bash
+cat > requirements.txt << 'EOF'
+streamlit>=1.40.0
+torch
+transformers
+accelerate
+numpy
+pandas
+pillow
+python-dotenv
+huggingface_hub>=0.24.0
+anthropic
+openai
+playwright
+colorthief
+faiss-cpu
+tqdm
+requests
+scikit-learn
+sentencepiece
+EOF
+
+git checkout --orphan space-deploy
+git add -A
+git rm --cached -r outputs/ ProjectPaper/ spring-2025/ spring-2026/ "src/agents/moodboard_layout/rendered_templates/"
+git commit -m "your message here"
+git push space space-deploy:main --force
+git checkout -f main
+git branch -D space-deploy
+```
+
+> **Note:** The `cat > requirements.txt` step is required because a VS Code linter strips packages not installed in the local environment. Running this as one block ensures the correct `requirements.txt` is committed before the linter can revert it.
+
+On first startup the Space downloads the embedding files automatically (~1 min). Subsequent loads are fast.
 
 ---
 
