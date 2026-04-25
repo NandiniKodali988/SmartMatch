@@ -1,0 +1,27 @@
+project:
+  type: manuscript
+
+manuscript:
+  article: index.qmd
+
+format:
+  html:
+    comments:
+      hypothesis: true
+  pdf:
+    documentclass: article
+    geometry:
+      - top=1in
+      - bottom=1in
+      - left=1.25in
+      - right=1.25in
+    fontsize: 11pt
+    number-sections: true
+    colorlinks: true
+  docx: default
+
+execute:
+  freeze: true
+
+
+
