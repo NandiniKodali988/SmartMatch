@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>SmartMatch: A Multi-Agent Pipeline for Mood Board Generation via Graph-Augmented Retrieval and Multimodal Synthesis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script async="" src="https://hypothes.is/embed.js"></script>
+<script>
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    document.body.classList.add('hypothesis-enabled');
+  });
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta name="citation_title" content="SmartMatch: A Multi-Agent Pipeline for Mood Board Generation via Graph-Augmented Retrieval and Multimodal Synthesis">
+<meta name="citation_abstract" content="Visual content selection is a recurring challenge for creatives and marketers who must identify images that match not just a topic but a specific emotional tone, aesthetic intent, and compositional style. Conventional image search fails because abstract or emotionally rich language does not map naturally to the visual feature spaces that retrieval models operate in.
+
+We present SmartMatch, a multi-agent system that generates cohesive nine-image mood boards from free-form natural language. The pipeline comprises five stages: a Visual Concept Grounding Agent that uses Claude to decompose user intent into structured visual descriptors; a Hybrid Retrieval system combining SigLIP-2 visual embeddings with per-field OpenAI text embeddings over 25,000 Unsplash images; a Graph RAG Agent that builds a knowledge graph over the corpus and performs candidate deduplication, expansion, and reranking; a Multimodal Verification and Coherence Agent that selects a visually consistent final set; and a Justification Agent that produces natural-language explanations for each image alongside a board-level narrative. When retrieval scores fall below a threshold, the system falls back to gpt-image-1 with Claude-driven diverse prompt synthesis.
+
+LLM-as-judge evaluation across 50 diverse queries yields an overall mean score of 3.45 out of 5.0, with relevance at 4.18, visual quality at 3.40, coherence at 3.06, and aesthetics at 3.16. An ablation study confirms that LLM grounding contributes the largest single gain in relevance (+0.7) and Graph RAG the largest gain in coherence (+0.6). The system runs entirely on consumer hardware without a GPU and is deployed as a live Streamlit application on HuggingFace Spaces.
+">
+<meta name="citation_author" content="Qingyang Wang">
+<meta name="citation_author" content="Nandini Kodali">
+<meta name="citation_author" content="Caroline Delva">
+<meta name="citation_author" content="Xinzhou Li">
+<meta name="citation_language" content="en">
+<meta name="citation_reference" content="citation_title=Learning transferable visual models from natural language supervision;,citation_author=Alec Radford;,citation_author=Jong Wook Kim;,citation_author=Chris Hallacy;,citation_author=Aditya Ramesh;,citation_author=Gabriel Goh;,citation_author=Sandhini Agarwal;,citation_author=Girish Sastry;,citation_author=Amanda Askell;,citation_author=Pamela Mishkin;,citation_author=Jack Clark;,citation_author=others;,citation_publication_date=2021;,citation_cover_date=2021;,citation_year=2021;,citation_conference_title=International conference on machine learning;,citation_conference=PmLR;">
+<meta name="citation_reference" content="citation_title=Sigmoid loss for language image pre-training;,citation_author=Xiaohua Zhai;,citation_author=Basil Mustafa;,citation_author=Alexander Kolesnikov;,citation_author=Lucas Beyer;,citation_publication_date=2023;,citation_cover_date=2023;,citation_year=2023;,citation_conference_title=Proceedings of the IEEE/CVF international conference on computer vision;">
+<meta name="citation_reference" content="citation_title=Colbert: Efficient and effective passage search via contextualized late interaction over bert;,citation_author=Omar Khattab;,citation_author=Matei Zaharia;,citation_publication_date=2020;,citation_cover_date=2020;,citation_year=2020;,citation_conference_title=Proceedings of the 43rd international ACM SIGIR conference on research and development in information retrieval;">
+<meta name="citation_reference" content="citation_title=Dense passage retrieval for open-domain question answering;,citation_author=Vladimir Karpukhin;,citation_author=Barlas Oguz;,citation_author=Sewon Min;,citation_author=Patrick Lewis;,citation_author=Ledell Wu;,citation_author=Sergey Edunov;,citation_author=Danqi Chen;,citation_author=Wen-tau Yih;,citation_publication_date=2020;,citation_cover_date=2020;,citation_year=2020;,citation_conference_title=Proceedings of the 2020 conference on empirical methods in natural language processing (EMNLP);">
+<meta name="citation_reference" content="citation_title=Retrieval-augmented generation for knowledge-intensive nlp tasks;,citation_author=Patrick Lewis;,citation_author=Ethan Perez;,citation_author=Aleksandra Piktus;,citation_author=Fabio Petroni;,citation_author=Vladimir Karpukhin;,citation_author=Naman Goyal;,citation_author=Heinrich Küttler;,citation_author=Mike Lewis;,citation_author=Wen-tau Yih;,citation_author=Tim Rocktäschel;,citation_author=others;,citation_publication_date=2020;,citation_cover_date=2020;,citation_year=2020;,citation_volume=33;,citation_journal_title=Advances in neural information processing systems;">
+<meta name="citation_reference" content="citation_title=Precise zero-shot dense retrieval without relevance labels;,citation_author=Luyu Gao;,citation_author=Xueguang Ma;,citation_author=Jimmy Lin;,citation_author=Jamie Callan;,citation_publication_date=2023;,citation_cover_date=2023;,citation_year=2023;,citation_conference_title=Proceedings of the 61st annual meeting of the association for computational linguistics (volume 1: Long papers);">
+<meta name="citation_reference" content="citation_title=Neural graph collaborative filtering;,citation_author=Xiang Wang;,citation_author=Xiangnan He;,citation_author=Meng Wang;,citation_author=Fuli Feng;,citation_author=Tat-Seng Chua;,citation_publication_date=2019;,citation_cover_date=2019;,citation_year=2019;,citation_conference_title=Proceedings of the 42nd international ACM SIGIR conference on research and development in information retrieval;">
+<meta name="citation_reference" content="citation_title=Color compatibility from large datasets;,citation_author=Peter O’Donovan;,citation_author=Aseem Agarwala;,citation_author=Aaron Hertzmann;,citation_publication_date=2011;,citation_cover_date=2011;,citation_year=2011;,citation_inbook_title=ACM SIGGRAPH 2011 papers;">
+<meta name="citation_reference" content="citation_title=Image style transfer using convolutional neural networks;,citation_author=Leon A Gatys;,citation_author=Alexander S Ecker;,citation_author=Matthias Bethge;,citation_publication_date=2016;,citation_cover_date=2016;,citation_year=2016;,citation_conference_title=Proceedings of the IEEE conference on computer vision and pattern recognition;">
+</head>
+
+<body>
+
+<header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">SmartMatch: A Multi-Agent Pipeline for Mood Board Generation via Graph-Augmented Retrieval and Multimodal Synthesis</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+            <div class="quarto-title-meta-author">
+          <div class="quarto-title-meta-heading">Authors</div>
+          <div class="quarto-title-meta-heading">Affiliation</div>
+          
+                <div class="quarto-title-meta-contents">
+            <p class="author">Qingyang Wang <a href="mailto:true" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Georgetown University
+                      </p>
+                  </div>
+                      <div class="quarto-title-meta-contents">
+            <p class="author">Nandini Kodali <a href="mailto:true" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Georgetown University
+                      </p>
+                  </div>
+                      <div class="quarto-title-meta-contents">
+            <p class="author">Caroline Delva <a href="mailto:true" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Georgetown University
+                      </p>
+                  </div>
+                      <div class="quarto-title-meta-contents">
+            <p class="author">Xinzhou Li <a href="mailto:true" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Georgetown University
+                      </p>
+                  </div>
+                    </div>
+        
+        <div class="quarto-title-meta">
+
+                      
+          
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      <div class="quarto-alternate-formats"><div class="quarto-title-meta-heading">Other Formats</div><div class="quarto-title-meta-contents"><p><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></p></div><div class="quarto-title-meta-contents"><p><a href="index.docx"><i class="bi bi-file-word"></i>MS Word</a></p></div></div></div>
+    </div>
+
+    <div>
+      <div class="abstract">
+        <div class="block-title">Abstract</div>
+        <p>Visual content selection is a recurring challenge for creatives and marketers who must identify images that match not just a topic but a specific emotional tone, aesthetic intent, and compositional style. Conventional image search fails because abstract or emotionally rich language does not map naturally to the visual feature spaces that retrieval models operate in.</p>
+        <p>We present SmartMatch, a multi-agent system that generates cohesive nine-image mood boards from free-form natural language. The pipeline comprises five stages: a Visual Concept Grounding Agent that uses Claude to decompose user intent into structured visual descriptors; a Hybrid Retrieval system combining SigLIP-2 visual embeddings with per-field OpenAI text embeddings over 25,000 Unsplash images; a Graph RAG Agent that builds a knowledge graph over the corpus and performs candidate deduplication, expansion, and reranking; a Multimodal Verification and Coherence Agent that selects a visually consistent final set; and a Justification Agent that produces natural-language explanations for each image alongside a board-level narrative. When retrieval scores fall below a threshold, the system falls back to gpt-image-1 with Claude-driven diverse prompt synthesis.</p>
+        <p>LLM-as-judge evaluation across 50 diverse queries yields an overall mean score of 3.45 out of 5.0, with relevance at 4.18, visual quality at 3.40, coherence at 3.06, and aesthetics at 3.16. An ablation study confirms that LLM grounding contributes the largest single gain in relevance (+0.7) and Graph RAG the largest gain in coherence (+0.6). The system runs entirely on consumer hardware without a GPU and is deployed as a live Streamlit application on HuggingFace Spaces.</p>
+      </div>
+    </div>
+
+
+    <div class="quarto-other-links-text-target">
+    </div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#related-work" id="toc-related-work" class="nav-link" data-scroll-target="#related-work">Related Work</a></li>
+  <li><a href="#system-architecture" id="toc-system-architecture" class="nav-link" data-scroll-target="#system-architecture">System Architecture</a>
+  <ul class="collapse">
+  <li><a href="#pipeline-overview" id="toc-pipeline-overview" class="nav-link" data-scroll-target="#pipeline-overview">Pipeline Overview</a></li>
+  <li><a href="#visual-concept-grounding-agent" id="toc-visual-concept-grounding-agent" class="nav-link" data-scroll-target="#visual-concept-grounding-agent">Visual Concept Grounding Agent</a></li>
+  <li><a href="#hybrid-retrieval" id="toc-hybrid-retrieval" class="nav-link" data-scroll-target="#hybrid-retrieval">Hybrid Retrieval</a></li>
+  <li><a href="#graph-rag-agent" id="toc-graph-rag-agent" class="nav-link" data-scroll-target="#graph-rag-agent">Graph RAG Agent</a></li>
+  <li><a href="#multimodal-verification-and-coherence" id="toc-multimodal-verification-and-coherence" class="nav-link" data-scroll-target="#multimodal-verification-and-coherence">Multimodal Verification and Coherence</a></li>
+  <li><a href="#generation-agent" id="toc-generation-agent" class="nav-link" data-scroll-target="#generation-agent">Generation Agent</a></li>
+  <li><a href="#justification-agent" id="toc-justification-agent" class="nav-link" data-scroll-target="#justification-agent">Justification Agent</a></li>
+  <li><a href="#supporting-components" id="toc-supporting-components" class="nav-link" data-scroll-target="#supporting-components">Supporting Components</a></li>
+  <li><a href="#external-services" id="toc-external-services" class="nav-link" data-scroll-target="#external-services">External Services</a></li>
+  </ul></li>
+  <li><a href="#data-and-preprocessing" id="toc-data-and-preprocessing" class="nav-link" data-scroll-target="#data-and-preprocessing">Data and Preprocessing</a></li>
+  <li><a href="#evaluation" id="toc-evaluation" class="nav-link" data-scroll-target="#evaluation">Evaluation</a>
+  <ul class="collapse">
+  <li><a href="#llm-as-judge-framework" id="toc-llm-as-judge-framework" class="nav-link" data-scroll-target="#llm-as-judge-framework">LLM-as-Judge Framework</a></li>
+  <li><a href="#overall-results" id="toc-overall-results" class="nav-link" data-scroll-target="#overall-results">Overall Results</a></li>
+  <li><a href="#results-by-routing-path" id="toc-results-by-routing-path" class="nav-link" data-scroll-target="#results-by-routing-path">Results by Routing Path</a></li>
+  <li><a href="#query-level-results" id="toc-query-level-results" class="nav-link" data-scroll-target="#query-level-results">Query-Level Results</a></li>
+  <li><a href="#ablation-study" id="toc-ablation-study" class="nav-link" data-scroll-target="#ablation-study">Ablation Study</a></li>
+  </ul></li>
+  <li><a href="#models-and-technologies" id="toc-models-and-technologies" class="nav-link" data-scroll-target="#models-and-technologies">Models and Technologies</a></li>
+  <li><a href="#responsible-ai" id="toc-responsible-ai" class="nav-link" data-scroll-target="#responsible-ai">Responsible AI</a></li>
+  <li><a href="#findings-and-discussion" id="toc-findings-and-discussion" class="nav-link" data-scroll-target="#findings-and-discussion">Findings and Discussion</a></li>
+  <li><a href="#conclusion-and-future-work" id="toc-conclusion-and-future-work" class="nav-link" data-scroll-target="#conclusion-and-future-work">Conclusion and Future Work</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+  
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Selecting images for a mood board requires matching visual output to emotional intent. A user searching for images that evoke the feeling of being burnt out after a long week is not describing a literal scene but expressing an affective state that should translate into a specific palette, lighting, compositional weight, and subject matter. Conventional image search engines fail at this translation because vision-language models such as SigLIP-2 are trained primarily on literal object descriptions, and emotionally rich language, abstract concepts, and aesthetic intentions are systematically underrepresented in their training distributions.</p>
+<p>A system designed to bridge this gap must do more than retrieve images. It must interpret intent, structure the retrieval problem, evaluate coherence across a set of images, and explain its selections. SmartMatch addresses all four requirements through a coordinated multi-agent pipeline that produces a nine-image mood board with per-image justifications and a board-level narrative.</p>
+<p>The research questions motivating this work are: (1) Does LLM-based visual grounding improve retrieval quality for abstract queries compared to direct embedding search? (2) Does graph-augmented retrieval improve mood board coherence compared to flat similarity search? We evaluate both questions through an ablation study and an LLM-as-judge framework across 50 diverse queries.</p>
+</section>
+<section id="related-work" class="level2">
+<h2 class="anchored" data-anchor-id="related-work">Related Work</h2>
+<p><strong>Vision-language retrieval.</strong> Contrastive models such as CLIP <span class="citation" data-cites="radford2021learning">(<a href="#ref-radford2021learning" role="doc-biblioref">Radford et al. 2021</a>)</span> and SigLIP <span class="citation" data-cites="zhai2023sigmoid">(<a href="#ref-zhai2023sigmoid" role="doc-biblioref">Zhai et al. 2023</a>)</span> enable zero-shot image retrieval through shared embedding spaces. SigLIP-2 improves on CLIP via sigmoid loss, achieving stronger multi-label retrieval performance. However, their text encoders favor literal descriptions over affective language. Per-field scoring approaches <span class="citation" data-cites="khattab2020colbert karpukhin2020dense">(<a href="#ref-khattab2020colbert" role="doc-biblioref">Khattab and Zaharia 2020</a>; <a href="#ref-karpukhin2020dense" role="doc-biblioref">Karpukhin et al. 2020</a>)</span> suggest that decomposing queries into independent semantic dimensions can improve over single-vector retrieval, an insight that informs SmartMatch’s hybrid retrieval design.</p>
+<p><strong>LLM-augmented retrieval.</strong> Retrieval-Augmented Generation <span class="citation" data-cites="lewis2020retrieval">(<a href="#ref-lewis2020retrieval" role="doc-biblioref">Lewis et al. 2020</a>)</span> and HyDE <span class="citation" data-cites="gao2023precise">(<a href="#ref-gao2023precise" role="doc-biblioref">Gao et al. 2023</a>)</span> demonstrate that LLMs can reframe queries into forms better suited to retrieval models. SmartMatch’s grounding agent applies this principle by converting abstract user text into structured visual descriptors aligned with SigLIP-2’s training distribution.</p>
+<p><strong>Graph-based recommendation.</strong> Neural graph collaborative filtering <span class="citation" data-cites="wang2019neural">(<a href="#ref-wang2019neural" role="doc-biblioref">Wang et al. 2019</a>)</span> shows that item-graph connectivity is a reliable signal for recommendation diversity. SmartMatch adapts this to image retrieval by constructing edges based on weighted field-level similarity across mood, color palette, and visual description.</p>
+<p><strong>Mood board generation.</strong> Prior computational approaches <span class="citation" data-cites="o2011color gatys2016image">(<a href="#ref-o2011color" role="doc-biblioref">O’Donovan, Agarwala, and Hertzmann 2011</a>; <a href="#ref-gatys2016image" role="doc-biblioref">Gatys, Ecker, and Bethge 2016</a>)</span> focused on color harmony and style transfer using hand-crafted features, without support for semantic or emotional intent. SmartMatch is the first system to combine LLM grounding, hybrid semantic retrieval, graph-augmented reranking, and LLM-based coherence selection in a unified mood board pipeline.</p>
+</section>
+<section id="system-architecture" class="level2">
+<h2 class="anchored" data-anchor-id="system-architecture">System Architecture</h2>
+<p>SmartMatch is a multi-agent pipeline coordinated by an OrchestratorAgent that manages routing, step timing, structured logging, and safety checks. The system accepts free-form text and optionally uploaded images, and returns a nine-image mood board with per-image justifications and a board-level narrative. All inter-agent communication uses Pydantic models rather than raw dictionaries, ensuring field mismatches fail loudly at parse time.</p>
+<section id="pipeline-overview" class="level3">
+<h3 class="anchored" data-anchor-id="pipeline-overview">Pipeline Overview</h3>
+<p>The pipeline follows two branches. Branch A handles uploaded images: after grounding, the system routes directly to the Generation Agent for image editing. Branch B, the primary path, handles text-only queries through hybrid retrieval, Graph RAG, verification, and coherence selection. If the top retrieval score falls below a threshold of 0.5, the system falls back to on-demand generation. The routing decision deliberately uses the pre-Graph RAG hybrid score rather than the post-reranking score. Graph expansion and connectivity-based reranking can inflate scores for abstract queries by surfacing well-connected neighbors, masking the fact that no genuinely relevant images exist in the corpus. Using the raw hybrid score as the routing signal ensures the generation fallback is triggered when retrieval quality is actually insufficient.</p>
+<div id="fig-pipeline" class="quarto-float quarto-figure quarto-figure-center anchored" data-out-width="90%" data-fig-pos="H">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/Pipeline.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: SmartMatch System Architecture: Orchestrator-coordinated multi-agent pipeline"><img src="images/Pipeline.png" class="img-fluid figure-img" data-fig-pos="H" data-out-width="90%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: SmartMatch System Architecture: Orchestrator-coordinated multi-agent pipeline
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="visual-concept-grounding-agent" class="level3">
+<h3 class="anchored" data-anchor-id="visual-concept-grounding-agent">Visual Concept Grounding Agent</h3>
+<p>The grounding agent transforms raw user text into a structured JSON object using Claude (claude-haiku-4-5-20251001). The output contains seven fields:</p>
+<div id="tbl-grounding-fields" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-grounding-fields-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Output fields produced by the Visual Concept Grounding Agent
+</figcaption>
+<div aria-describedby="tbl-grounding-fields-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>visual_description</td>
+<td>A rich sentence describing the ideal image</td>
+</tr>
+<tr class="even">
+<td>scene</td>
+<td>Scene and setting keywords</td>
+</tr>
+<tr class="odd">
+<td>mood</td>
+<td>Emotional and atmospheric keywords</td>
+</tr>
+<tr class="even">
+<td>style</td>
+<td>Visual style keywords</td>
+</tr>
+<tr class="odd">
+<td>lighting</td>
+<td>Lighting conditions</td>
+</tr>
+<tr class="even">
+<td>color_palette</td>
+<td>Dominant colors and tones</td>
+</tr>
+<tr class="odd">
+<td>intent</td>
+<td>Use case: professional, editorial, or social</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The agent supports multi-turn refinement via a MemoryManager that persists grounding outputs across turns within a session. When a user submits a follow-up request, the new query is composed with the previous grounding output and the full conversation history, so the system modifies direction incrementally rather than restarting from scratch. For example, after generating an initial board for “feeling burnt out after a long week,” a follow-up of “make it warmer and less isolated” shifts the mood and color_palette fields while preserving the original scene and intent. Liked images are kept across turns; only the remaining slots are re-retrieved or re-generated. For offline preprocessing, the Anthropic Batch API generates grounding outputs for all 25,000 corpus images at a 50% cost reduction versus the live API, eliminating per-image LLM calls from the inference path and reducing live Claude usage to query-level grounding only.</p>
+</section>
+<section id="hybrid-retrieval" class="level3">
+<h3 class="anchored" data-anchor-id="hybrid-retrieval">Hybrid Retrieval</h3>
+<p>Retrieval combines two complementary signals. The SigLIP-2 Retrieval Agent performs cosine similarity search over a FAISS index of 25,000 pre-computed image embeddings using google/siglip-base-patch16-224. The Field Text Retrieval Agent computes per-field semantic embeddings via OpenAI text-embedding-3-large independently for visual_description, mood, and color_palette. The hybrid score is:</p>
+<p><span class="math display">\[\text{score} = 0.3 \times \text{siglip\_score} + 0.7 \times \text{text\_score}\]</span></p>
+<p>Text similarity is weighted more heavily (0.7) because SigLIP-2 scores are frequently negative in high-dimensional space, particularly for abstract emotional queries. The text embedding component reliably captures the semantic intent of the grounding output. The system retrieves up to 20 candidates before Graph RAG processing.</p>
+</section>
+<section id="graph-rag-agent" class="level3">
+<h3 class="anchored" data-anchor-id="graph-rag-agent">Graph RAG Agent</h3>
+<p>An offline script builds a weighted knowledge graph over all 25,000 images using FAISS-based nearest-neighbor search per embedding field. Edge weights are computed as a weighted combination of field-level similarities:</p>
+<p><span class="math display">\[\text{edge\_weight} = 0.35 \times \text{mood\_sim} + 0.20 \times \text{color\_sim} + 0.45 \times \text{visual\_sim}\]</span></p>
+<p>This formulation connects images that share visual appearance and atmosphere. The graph has 750,000 edges across 25,000 nodes with an average degree of 30.</p>
+<p>The agent operates in three steps:</p>
+<ol type="1">
+<li><strong>Deduplicate</strong>: removes candidate pairs with edge weight above 0.60, keeping the higher-scoring image in each near-duplicate pair.</li>
+<li><strong>Expand</strong>: takes the top-5 seed candidates, traverses their graph neighbors, and adds up to 10 new candidates. A maximum of 2 new candidates are allowed per seed to ensure diversity. Expanded candidates are scored using real text similarity via <code>_score_all</code> rather than proxy scores, so they compete on the same scale as hybrid retrieval candidates.</li>
+<li><strong>Rerank</strong>: combines hybrid score and graph connectivity as <span class="math inline">\(\text{final} = 0.75 \times \text{hybrid} + 0.25 \times \text{connectivity}\)</span>, where connectivity is the average edge weight to other candidates in the set.</li>
+</ol>
+</section>
+<section id="multimodal-verification-and-coherence" class="level3">
+<h3 class="anchored" data-anchor-id="multimodal-verification-and-coherence">Multimodal Verification and Coherence</h3>
+<p>The Multimodal Verification Agent passes each candidate to Claude Vision, evaluating whether each image genuinely matches the mood, palette, and intent of the query. If fewer than 6 images pass, the Generation Agent fills the gap; generated images are flagged <code>verified=True</code> so they are included in the Coherence selection pool. The Coherence Agent receives the top 20 verified candidates and uses Claude to select the final 9 images that best balance thematic consistency, visual diversity, and aesthetic harmony.</p>
+</section>
+<section id="generation-agent" class="level3">
+<h3 class="anchored" data-anchor-id="generation-agent">Generation Agent</h3>
+<p>When retrieval fails, the Generation Agent synthesizes images using gpt-image-1. The key mechanism is Claude-driven diverse prompt synthesis: before generation, Claude produces <span class="math inline">\(n\)</span> visually distinct image descriptions enforcing variation across subject type (person, interior, outdoor, still life, abstract, urban, nature, silhouette, aerial), scale (extreme close-up through aerial), and emotional register (literal, symbolic, atmospheric). Each description is combined with a distinct photographic style variant. API calls run concurrently with a thread pool of 3 workers, reducing wall-clock time from approximately 90 seconds to 25-30 seconds. If any generated image scores below 0.15 on the hybrid similarity measure, Claude refines that specific prompt using the prior prompt and score as context and regenerates only that image, a targeted quality-enforcement loop that avoids discarding the full batch while ensuring the board meets a minimum visual standard.</p>
+</section>
+<section id="justification-agent" class="level3">
+<h3 class="anchored" data-anchor-id="justification-agent">Justification Agent</h3>
+<p>The Justification Agent produces a 2-3 sentence per-image explanation grounded in the image caption and user query, and a 3-5 sentence board-level narrative. All output is generated by Claude without reference to scores or technical details.</p>
+</section>
+<section id="supporting-components" class="level3">
+<h3 class="anchored" data-anchor-id="supporting-components">Supporting Components</h3>
+<p>The OrchestratorAgent coordinates all stages via lazy agent initialization. The GuardrailAgent blocks harmful queries while allowing dark, melancholy, or unconventional creative requests, and fails open on API error. The PipelineLogger writes structured JSONL logs capturing step timings, routing decisions, and verification outcomes. The Streamlit interface exposes multi-turn refinement through a persistent chat panel: after a board is generated, users can type natural-language feedback (e.g., “more abstract, remove people”) which triggers re-grounding with the accumulated conversation history, keeping liked images and replacing the rest.</p>
+</section>
+<section id="external-services" class="level3">
+<h3 class="anchored" data-anchor-id="external-services">External Services</h3>
+<div id="tbl-external-services" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-external-services-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: External services and models used by SmartMatch
+</figcaption>
+<div aria-describedby="tbl-external-services-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Component</th>
+<th>Service</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Grounding, verification, coherence, justification, prompt synthesis</td>
+<td>Anthropic API (claude-haiku-4-5-20251001)</td>
+</tr>
+<tr class="even">
+<td>Image retrieval embeddings</td>
+<td>SigLIP-2 (google/siglip-base-patch16-224)</td>
+</tr>
+<tr class="odd">
+<td>Field-level text embeddings</td>
+<td>OpenAI text-embedding-3-large</td>
+</tr>
+<tr class="even">
+<td>Fallback image generation</td>
+<td>gpt-image-1</td>
+</tr>
+<tr class="odd">
+<td>Similarity search</td>
+<td>FAISS</td>
+</tr>
+<tr class="even">
+<td>Image dataset</td>
+<td>Unsplash (25,000 images)</td>
+</tr>
+<tr class="odd">
+<td>Batch grounding preprocessing</td>
+<td>Anthropic Batch API</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="data-and-preprocessing" class="level2">
+<h2 class="anchored" data-anchor-id="data-and-preprocessing">Data and Preprocessing</h2>
+<p>The image corpus consists of 25,000 photographs from the Unsplash dataset, selected for diversity across subjects, moods, and visual styles. Grounding outputs for all 25,000 images were generated offline via the Anthropic Batch API. SigLIP-2 embeddings are stored in a FAISS flat inner product index with L2 normalization. Field text embeddings produce a 25,000 x 3,072 matrix per field stored as NumPy float32 arrays. The knowledge graph was built offline in approximately 8 minutes on CPU using FAISS-based nearest-neighbor search per field with the weighted combination described in the Graph RAG Agent section.</p>
+<p>The evaluation query set consists of 50 queries manually constructed to span five categories with 10 queries each: emotional and lifestyle, seasonal and nature, lifestyle and aesthetic, commercial and campaign, and abstract and conceptual. Queries were designed to vary in specificity (concrete scenes versus affective states), vocabulary (literal versus metaphorical), and expected corpus coverage (well-represented versus niche). This design ensures the evaluation captures both the system’s strengths on emotionally expressive queries and its failure modes on genre-specific or cross-domain requests.</p>
+</section>
+<section id="evaluation" class="level2">
+<h2 class="anchored" data-anchor-id="evaluation">Evaluation</h2>
+<section id="llm-as-judge-framework" class="level3">
+<h3 class="anchored" data-anchor-id="llm-as-judge-framework">LLM-as-Judge Framework</h3>
+<p>We evaluate SmartMatch using an LLM-as-judge framework across 50 diverse queries spanning five categories: emotional and lifestyle (e.g., feeling burnt out after a long week), seasonal and nature (e.g., spring blossoms and fresh beginnings), lifestyle and aesthetic (e.g., minimalist workspace inspiration), commercial and campaign (e.g., sustainable coffee brand earthy tones), and abstract and conceptual (e.g., the color of loneliness). For each query, Claude rates the mood board on four criteria on a 1-5 scale:</p>
+<ul>
+<li><strong>Relevance:</strong> Whether the images collectively match the semantic and emotional intent of the query. A score of 5 indicates all images clearly reflect the query’s theme; a score of 1 indicates the board is unrelated or contradictory.</li>
+<li><strong>Visual Quality:</strong> Technical and compositional quality of the images, including sharpness, framing, and professional appearance. A score of 5 reflects consistently high-quality photographs; a score of 1 reflects blurry, poorly composed, or visually inconsistent images.</li>
+<li><strong>Coherence:</strong> Whether the nine images function together as a unified mood board, sharing a consistent palette, atmosphere, and tone. A score of 5 indicates a strongly unified board; a score of 1 indicates images that feel unrelated to each other.</li>
+<li><strong>Aesthetics:</strong> Overall visual appeal and artistic quality of the selection as a curated set. A score of 5 indicates a compelling, gallery-worthy selection; a score of 1 indicates an unappealing or arbitrary collection.</li>
+</ul>
+<p>The mean of the four criteria is taken as the overall score for each query.</p>
+</section>
+<section id="overall-results" class="level3">
+<h3 class="anchored" data-anchor-id="overall-results">Overall Results</h3>
+<div id="tbl-overall-results" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-overall-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: LLM-as-judge mean scores across 50 queries
+</figcaption>
+<div aria-describedby="tbl-overall-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Criterion</th>
+<th>Mean Score</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Relevance</td>
+<td>4.18 / 5</td>
+</tr>
+<tr class="even">
+<td>Visual Quality</td>
+<td>3.40 / 5</td>
+</tr>
+<tr class="odd">
+<td>Coherence</td>
+<td>3.06 / 5</td>
+</tr>
+<tr class="even">
+<td>Aesthetics</td>
+<td>3.16 / 5</td>
+</tr>
+<tr class="odd">
+<td><strong>Overall</strong></td>
+<td><strong>3.45 / 5</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div id="fig-distributions" class="quarto-float quarto-figure quarto-figure-center anchored" data-out-width="90%" data-fig-pos="H">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-distributions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/02_distributions.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: Score distributions across all four evaluation criteria"><img src="images/02_distributions.png" class="img-fluid figure-img" data-fig-pos="H" data-out-width="90%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-distributions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Score distributions across all four evaluation criteria
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="results-by-routing-path" class="level3">
+<h3 class="anchored" data-anchor-id="results-by-routing-path">Results by Routing Path</h3>
+<div id="tbl-routing-results" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-routing-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: Evaluation results broken down by routing path
+</figcaption>
+<div aria-describedby="tbl-routing-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Path</th>
+<th>n</th>
+<th>Relevance</th>
+<th>Coherence</th>
+<th>Overall</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Retrieval</td>
+<td>47</td>
+<td>4.15</td>
+<td>3.00</td>
+<td>3.44</td>
+</tr>
+<tr class="even">
+<td>Generation</td>
+<td>3</td>
+<td>4.67</td>
+<td>4.00</td>
+<td>3.67</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div id="fig-routing" class="quarto-float quarto-figure quarto-figure-center anchored" data-out-width="90%" data-fig-pos="H">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-routing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/03_routing_overview.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: Evaluation scores by routing path (retrieval vs.&nbsp;generation)"><img src="images/03_routing_overview.png" class="img-fluid figure-img" data-fig-pos="H" data-out-width="90%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-routing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Evaluation scores by routing path (retrieval vs.&nbsp;generation)
+</figcaption>
+</figure>
+</div>
+<p>The system achieves strong relevance (4.18/5), confirming that the grounding and retrieval pipeline reliably interprets query intent. Coherence (3.06/5) is the weakest dimension; 19 of 50 queries score 2 or below, driven by visual monotony. Retrieval by semantic similarity returns the most similar images in the corpus, producing boards where multiple images share nearly identical compositions. The generation path achieves the highest overall scores (3.67) when the diverse prompt synthesis approach is applied, with coherence at 4.0.</p>
+</section>
+<section id="query-level-results" class="level3">
+<h3 class="anchored" data-anchor-id="query-level-results">Query-Level Results</h3>
+<p>Top five queries by mean score:</p>
+<div id="tbl-top-queries" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-top-queries-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: Top five queries by mean score
+</figcaption>
+<div aria-describedby="tbl-top-queries-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Score</th>
+<th>Path</th>
+<th>Query</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4.75</td>
+<td>Retrieval</td>
+<td>missing someone far away</td>
+</tr>
+<tr class="even">
+<td>4.50</td>
+<td>Retrieval</td>
+<td>feeling hopeful about the future</td>
+</tr>
+<tr class="odd">
+<td>4.50</td>
+<td>Retrieval</td>
+<td>the color of loneliness</td>
+</tr>
+<tr class="even">
+<td>4.25</td>
+<td>Generation</td>
+<td>finally finished my first marathon</td>
+</tr>
+<tr class="odd">
+<td>4.25</td>
+<td>Retrieval</td>
+<td>summer adventure road trip</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Bottom five queries by mean score:</p>
+<div id="tbl-bottom-queries" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-bottom-queries-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6: Bottom five queries by mean score
+</figcaption>
+<div aria-describedby="tbl-bottom-queries-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Score</th>
+<th>Path</th>
+<th>Query</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2.50</td>
+<td>Retrieval</td>
+<td>industrial loft modern design</td>
+</tr>
+<tr class="even">
+<td>2.75</td>
+<td>Retrieval</td>
+<td>dark academia library mood</td>
+</tr>
+<tr class="odd">
+<td>2.75</td>
+<td>Retrieval</td>
+<td>sustainable coffee brand earthy tones</td>
+</tr>
+<tr class="even">
+<td>2.75</td>
+<td>Retrieval</td>
+<td>connection between strangers</td>
+</tr>
+<tr class="odd">
+<td>3.00</td>
+<td>Retrieval</td>
+<td>golden hour on a quiet beach</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div id="fig-top-bottom" class="quarto-float quarto-figure quarto-figure-center anchored" data-out-width="90%" data-fig-pos="H">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-top-bottom-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/05_top_bottom.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Top and bottom performing queries by mean evaluation score"><img src="images/05_top_bottom.png" class="img-fluid figure-img" data-fig-pos="H" data-out-width="90%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-top-bottom-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Top and bottom performing queries by mean evaluation score
+</figcaption>
+</figure>
+</div>
+<p>Top-performing queries tend to be emotionally specific with clear visual correlates in the corpus. Bottom-performing queries are cross-domain, highly abstract, or genre-specific with limited corpus coverage.</p>
+</section>
+<section id="ablation-study" class="level3">
+<h3 class="anchored" data-anchor-id="ablation-study">Ablation Study</h3>
+<div id="tbl-ablation" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ablation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;7: Ablation study results showing the contribution of each pipeline component
+</figcaption>
+<div aria-describedby="tbl-ablation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Condition</th>
+<th>Relevance</th>
+<th>Coherence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A: SigLIP-2 only, no grounding, no Graph RAG</td>
+<td>2.8</td>
+<td>2.6</td>
+</tr>
+<tr class="even">
+<td>B: + LLM grounding</td>
+<td>3.5</td>
+<td>3.1</td>
+</tr>
+<tr class="odd">
+<td>C: + Graph RAG (dedup + expand + rerank)</td>
+<td>3.8</td>
+<td>3.7</td>
+</tr>
+<tr class="even">
+<td>D: Full system (+ verification + coherence)</td>
+<td>4.1</td>
+<td>3.9</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>LLM grounding contributes the largest single improvement in relevance (+0.7), confirming that structured visual decomposition substantially improves retrieval alignment. Graph RAG improves coherence more than relevance (+0.6 vs +0.3), consistent with its design: connectivity-based reranking promotes images well-connected to their peers rather than individually closest to the query.</p>
+</section>
+</section>
+<section id="models-and-technologies" class="level2">
+<h2 class="anchored" data-anchor-id="models-and-technologies">Models and Technologies</h2>
+<p><strong>LLM.</strong> Claude (claude-haiku-4-5-20251001) handles all LLM-dependent stages: grounding, verification, coherence selection, justification, diverse prompt synthesis, and safety checks. Haiku was chosen over larger Claude models because its latency on structured JSON generation and creative reasoning tasks is competitive with Sonnet at a fraction of the cost, and mood board generation is latency-sensitive for interactive use.</p>
+<p><strong>Embedding models.</strong> SigLIP-2 (google/siglip-base-patch16-224) provides visual embeddings, loaded locally via HuggingFace Transformers on CPU. Embeddings are pre-computed offline; only the query text embedding is computed at inference. OpenAI text-embedding-3-large was selected for field-level text retrieval because its 3,072-dimensional output captures fine-grained semantic distinctions across mood, color, and visual style better than smaller alternatives. OpenAI gpt-image-1 handles fallback generation and uploaded-image editing, returning base64-encoded PNG output.</p>
+<p><strong>Agent framework.</strong> SmartMatch is implemented as a custom Python pipeline using the Anthropic Python SDK, with no dependency on LangChain, LlamaIndex, or other agent orchestration frameworks. Agents are Python classes coordinated by an OrchestratorAgent. All inter-agent communication uses Pydantic models for type safety and explicit schema enforcement. This design was chosen to keep the control flow auditable and avoid the abstraction overhead of general-purpose frameworks for a pipeline with well-defined, fixed routing logic.</p>
+<p><strong>Infrastructure.</strong> FAISS provides sub-second similarity search over 25,000 images on CPU. Python’s ThreadPoolExecutor is used for concurrent image generation, reducing wall-clock time by approximately 65%. The application is built with Streamlit and deployed as a public live demo on HuggingFace Spaces, running entirely without a GPU. Pre-computed FAISS indices, NumPy embedding arrays, and the graph edge list are loaded at startup from stored artifacts, so no offline preprocessing is required at runtime. A complete retrieval-path run takes 45-90 seconds; the generation path takes 25-30 seconds.</p>
+</section>
+<section id="responsible-ai" class="level2">
+<h2 class="anchored" data-anchor-id="responsible-ai">Responsible AI</h2>
+<p><strong>Content safety.</strong> The GuardrailAgent applies input and output safety filters using Claude. Input guardrails block queries that explicitly request harmful content while allowing dark, melancholy, or unconventional creative requests. Output guardrails filter generated images with unsafe descriptions. Both checks fail open on API error to avoid blocking legitimate creative use cases.</p>
+<p><strong>Bias and representation.</strong> The Unsplash corpus has known demographic and geographic skews. Queries involving specific cultural references score lower than nature and lifestyle queries, suggesting systematic corpus gaps. Future work should include demographic corpus analysis and targeted expansion of underrepresented visual categories.</p>
+<p><strong>Hallucination.</strong> Justifications are grounded in image captions and user queries without factual claims about the world. Multimodal Verification provides an additional check against caption-similarity mismatches, reducing the risk of confidently incorrect descriptions.</p>
+<p><strong>Privacy.</strong> No user queries or uploaded images are stored beyond the session. The MemoryManager maintains in-memory state discarded at session end. JSONL pipeline logs contain query text but no personally identifiable information.</p>
+</section>
+<section id="findings-and-discussion" class="level2">
+<h2 class="anchored" data-anchor-id="findings-and-discussion">Findings and Discussion</h2>
+<p><strong>Grounding is the largest single improvement.</strong> Replacing raw user text with structured visual descriptors raises relevance by 0.7 points in the ablation, confirming that abstract language is structurally misaligned with embedding-based retrieval and that LLM-based decomposition can bridge this gap.</p>
+<p><strong>Coherence remains the primary challenge.</strong> Despite Graph RAG improvements, 19 of 50 queries still score 2 or below on coherence. Semantic similarity search returns the most similar images in the corpus, which are naturally visually monotonous. The Coherence Agent is constrained by the homogeneity of its candidate pool. The multi-turn refinement loop provides a complementary mechanism: user like/dislike signals and natural-language feedback (e.g., “too dark, replace with something brighter”) are folded into the next grounding call, steering retrieval toward underrepresented visual directions. This addresses coherence failures that stem from misalignment between query intent and corpus coverage, though it does not resolve failures caused by structural candidate-pool homogeneity. The latter requires enforcing diversity at the retrieval stage itself; future work should apply Max Marginal Relevance during the Graph RAG expand step.</p>
+<p><strong>Text similarity dominates hybrid retrieval.</strong> The hybrid score is weighted 0.7 in favor of text embeddings, reflecting the empirical observation that SigLIP-2 scores are frequently negative for abstract queries. The visual embedding contributes less signal than intended in those cases. Recalibrating SigLIP-2 scores or learning a fusion function is a key direction for future work.</p>
+<p><strong>Generation path performance.</strong> With diverse prompt synthesis, the generation path achieves a mean score of 3.67 and coherence of 4.0, demonstrating that Claude-driven diverse prompt generation effectively prevents the visual repetition that was the primary failure mode in the initial evaluation.</p>
+<p><strong>Performance trade-offs.</strong> The full pipeline takes 45-90 seconds on the retrieval path. Concurrent generation reduces wall-clock time by approximately 65%. Further optimization would require batching Claude verification and justification calls via the Anthropic Batch API.</p>
+</section>
+<section id="conclusion-and-future-work" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion-and-future-work">Conclusion and Future Work</h2>
+<p>SmartMatch demonstrates that multi-agent coordination, LLM-based grounding, and graph-augmented retrieval can produce mood boards that align with the explicit and implicit intent of natural language queries. The system achieves strong relevance (4.18/5) across 50 diverse queries. Coherence (3.06/5) remains the primary challenge, driven by the inherent homogeneity of similarity-based retrieval.</p>
+<p>Key contributions of this work are: (1) a Visual Concept Grounding Agent that maps abstract language to structured visual descriptors; (2) a Graph RAG architecture with weighted field-level similarity edges; (3) a multi-stage coherence pipeline combining graph reranking, multimodal verification, and LLM-based selection; (4) a Claude-driven diverse prompt synthesis approach for the generation fallback path; (5) a multi-turn refinement loop that accumulates conversation context to iteratively improve mood board direction; and (6) an LLM-as-judge evaluation framework for mood board quality.</p>
+<p><strong>Limitations.</strong> The 25,000-image corpus limits coverage for niche aesthetic styles and cross-domain queries. SigLIP-2 negative scores reduce the effectiveness of visual embeddings for abstract queries. Coherence failures persist because the retrieval candidate pool is inherently homogeneous.</p>
+<p><strong>Future work.</strong> Promising directions include: Max Marginal Relevance in the Graph RAG expand step; SigLIP-2 score recalibration or learned score fusion; corpus expansion with demographic analysis; richer multi-turn grounding that tracks fine-grained preference signals across turns to actively steer retrieval; and user studies comparing SmartMatch output to human-curated mood boards for ground-truth coherence evaluation.</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-gao2023precise" class="csl-entry" role="listitem">
+Gao, Luyu, Xueguang Ma, Jimmy Lin, and Jamie Callan. 2023. <span>“Precise Zero-Shot Dense Retrieval Without Relevance Labels.”</span> In <em>Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</em>, 1762–77.
+</div>
+<div id="ref-gatys2016image" class="csl-entry" role="listitem">
+Gatys, Leon A, Alexander S Ecker, and Matthias Bethge. 2016. <span>“Image Style Transfer Using Convolutional Neural Networks.”</span> In <em>Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition</em>, 2414–23.
+</div>
+<div id="ref-karpukhin2020dense" class="csl-entry" role="listitem">
+Karpukhin, Vladimir, Barlas Oguz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov, Danqi Chen, and Wen-tau Yih. 2020. <span>“Dense Passage Retrieval for Open-Domain Question Answering.”</span> In <em>Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</em>, 6769–81.
+</div>
+<div id="ref-khattab2020colbert" class="csl-entry" role="listitem">
+Khattab, Omar, and Matei Zaharia. 2020. <span>“Colbert: Efficient and Effective Passage Search via Contextualized Late Interaction over Bert.”</span> In <em>Proceedings of the 43rd International ACM SIGIR Conference on Research and Development in Information Retrieval</em>, 39–48.
+</div>
+<div id="ref-lewis2020retrieval" class="csl-entry" role="listitem">
+Lewis, Patrick, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Heinrich Küttler, et al. 2020. <span>“Retrieval-Augmented Generation for Knowledge-Intensive Nlp Tasks.”</span> <em>Advances in Neural Information Processing Systems</em> 33: 9459–74.
+</div>
+<div id="ref-o2011color" class="csl-entry" role="listitem">
+O’Donovan, Peter, Aseem Agarwala, and Aaron Hertzmann. 2011. <span>“Color Compatibility from Large Datasets.”</span> In <em>ACM SIGGRAPH 2011 Papers</em>, 1–12.
+</div>
+<div id="ref-radford2021learning" class="csl-entry" role="listitem">
+Radford, Alec, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, et al. 2021. <span>“Learning Transferable Visual Models from Natural Language Supervision.”</span> In <em>International Conference on Machine Learning</em>, 8748–63. PmLR.
+</div>
+<div id="ref-wang2019neural" class="csl-entry" role="listitem">
+Wang, Xiang, Xiangnan He, Meng Wang, Fuli Feng, and Tat-Seng Chua. 2019. <span>“Neural Graph Collaborative Filtering.”</span> In <em>Proceedings of the 42nd International ACM SIGIR Conference on Research and Development in Information Retrieval</em>, 165–74.
+</div>
+<div id="ref-zhai2023sigmoid" class="csl-entry" role="listitem">
+Zhai, Xiaohua, Basil Mustafa, Alexander Kolesnikov, and Lucas Beyer. 2023. <span>“Sigmoid Loss for Language Image Pre-Training.”</span> In <em>Proceedings of the IEEE/CVF International Conference on Computer Vision</em>, 11975–86.
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"loop":false,"closeEffect":"zoom","descPosition":"bottom","selector":".lightbox","openEffect":"zoom"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>
