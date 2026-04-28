@@ -191,4 +191,14 @@ src/
 - **Diverse prompt synthesis + quality retry** — Claude generates visually distinct prompts before generation; images scoring below threshold are individually re-prompted without discarding the full batch.
 - **Multi-turn refinement loop** — Like/dislike signals and natural-language chat feedback are folded into subsequent grounding calls, steering retrieval toward the user's aesthetic intent across turns.
 
+---
+
+## Deliverables
+
+| Item | File |
+|---|---|
+| Paper | `Deliverables/FinalPaper.pdf` |
+| Slides | `Deliverables/SmartMatch-slides.pdf` |
+| Poster | `Deliverables/Poster.pdf` |
+| Live demo | [huggingface.co/spaces/NandiniKodali/smartmatch](https://huggingface.co/spaces/NandiniKodali/smartmatch) |
 
